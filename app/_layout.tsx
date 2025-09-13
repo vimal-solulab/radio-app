@@ -1,4 +1,5 @@
 import { colors } from '@/constants/colors';
+import { PlayerProvider } from '@/contexts/PlayerContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -9,13 +10,13 @@ export default function RootLayout() {
   const currentColors = colors[colorScheme ?? 'light'];
 
   return (
-    <React.Fragment>
+    <PlayerProvider>
       <StatusBar style="light" backgroundColor={currentColors.background} />
       <Stack
         screenOptions={{
           headerShown: false,
         }}
       />
-    </React.Fragment>
+    </PlayerProvider>
   );
 }

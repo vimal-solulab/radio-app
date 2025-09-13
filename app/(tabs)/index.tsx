@@ -1,12 +1,11 @@
 import { GradientBackground } from "@/components/GradientBackground";
-import { MiniPlayer } from "@/components/MiniPlayer";
 import { StationCard } from "@/components/StationCard";
 import { colors } from "@/constants/colors";
 import {
   getStationsByCategory,
-  mockStations,
-  RadioStation,
+  RadioStation
 } from "@/constants/radioData";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import {
   ChevronRight,
@@ -34,11 +33,8 @@ type TabType = "recent" | "recommended" | "search" | "top";
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const currentColors = colors[colorScheme ?? "light"];
+  const { currentStation, isPlaying, playStation, pauseStation } = usePlayer();
   const [activeTab, setActiveTab] = useState<TabType>("recent");
-  const [currentStation, setCurrentStation] = useState<RadioStation | null>(
-    mockStations[0]
-  );
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const recentStations = getStationsByCategory("recent");
   const favoriteStations = getStationsByCategory("favorite");
@@ -53,20 +49,15 @@ export default function HomeScreen() {
   ];
 
   const handleStationPress = (station: RadioStation) => {
-    setCurrentStation(station);
+    // Station press logic
   };
 
   const handlePlayPress = (station: RadioStation) => {
-    setCurrentStation(station);
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleMiniPlayerPress = () => {
-    // Navigate to player screen
-  };
-
-  const handleMiniPlayerPlayPause = () => {
-    setIsPlaying(!isPlaying);
+    if (currentStation?.id === station.id && isPlaying) {
+      pauseStation();
+    } else {
+      playStation(station);
+    }
   };
 
   const renderStationCard = ({ item }: { item: RadioStation }) => (
@@ -319,18 +310,6 @@ export default function HomeScreen() {
           )}
         </ScrollView>
 
-        {/* Mini Player */}
-        {currentStation && (
-          <MiniPlayer
-            stationName={currentStation.name}
-            stationDescription={currentStation.description}
-            image={currentStation.image}
-            logo={currentStation.logo}
-            isPlaying={isPlaying}
-            onPlayPause={handleMiniPlayerPlayPause}
-            onPress={handleMiniPlayerPress}
-          />
-        )}
       </View>
     </GradientBackground>
   );
