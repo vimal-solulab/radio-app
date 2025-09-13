@@ -8,7 +8,6 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { router } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import React, { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -20,10 +19,29 @@ import {
 export default function FullPlayerScreen() {
   const colorScheme = useColorScheme();
   const currentColors = colors[colorScheme ?? "light"];
-  const { currentStation, isPlaying, pauseStation, resumeStation } =
-    usePlayer();
-  const [volume, setVolume] = useState(0.7);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const {
+    currentStation,
+    isPlaying,
+    pauseStation,
+    resumeStation,
+    volume,
+    setVolume,
+    bass,
+    setBass,
+    treble,
+    setTreble,
+    balance,
+    setBalance,
+    audioEffects,
+    toggleAudioEffect,
+    toggleFavorite,
+    isFavorite: isStationFavorite,
+    playPreviousStation,
+    playNextStation,
+    isLoading,
+    loadingProgress,
+    error,
+  } = usePlayer();
 
   if (!currentStation) {
     return (
@@ -46,31 +64,25 @@ export default function FullPlayerScreen() {
   };
 
   const handlePrevious = () => {
-    // Previous track logic
+    playPreviousStation();
   };
 
   const handleNext = () => {
-    // Next track logic
+    playNextStation();
   };
 
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
   };
 
-  const handleSleepTimer = () => {
-    // Sleep timer logic
-  };
-
   const handleFavorite = () => {
-    setIsFavorite(!isFavorite);
+    if (currentStation) {
+      toggleFavorite(currentStation.id);
+    }
   };
 
-  const handleShare = () => {
-    // Share logic
-  };
-
-  const handleCast = () => {
-    // Cast logic
+  const handleSettings = () => {
+    router.push("/(tabs)/settings");
   };
 
   const handleMinimize = () => {
@@ -113,10 +125,12 @@ export default function FullPlayerScreen() {
           <Typography variant="h4" color="white" weight="bold">
             {currentStation.name}
           </Typography>
-          <Typography variant="h5" 
-          weight="bold"
-          color="primary" 
-          numberOfLines={1}>
+          <Typography
+            variant="h5"
+            weight="bold"
+            color="primary"
+            numberOfLines={1}
+          >
             {currentStation.description}
           </Typography>
           <View style={styles.stationMeta}>
@@ -152,9 +166,22 @@ export default function FullPlayerScreen() {
           onNext={handleNext}
           volume={volume}
           onVolumeChange={handleVolumeChange}
-          onSleepTimer={handleSleepTimer}
           onFavorite={handleFavorite}
-          onSettings={handleShare}
+          onSettings={handleSettings}
+          isFavorite={
+            currentStation ? isStationFavorite(currentStation.id) : false
+          }
+          bass={bass}
+          treble={treble}
+          balance={balance}
+          audioEffects={audioEffects}
+          onBassChange={setBass}
+          onTrebleChange={setTreble}
+          onBalanceChange={setBalance}
+          onToggleAudioEffect={toggleAudioEffect}
+          isLoading={isLoading}
+          loadingProgress={loadingProgress}
+          error={error}
         />
       </ScrollView>
     </GradientBackground>
@@ -255,5 +282,71 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
+  },
+  statusContainer: {
+    alignItems: "center",
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  sleepTimerStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: radius.full,
+  },
+  shuffleStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: radius.full,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.background.card,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    width: "100%",
+    maxWidth: 400,
+    alignItems: "center",
+  },
+  modalTitle: {
+    marginBottom: spacing.sm,
+    textAlign: "center",
+  },
+  modalSubtitle: {
+    marginBottom: spacing.xl,
+    textAlign: "center",
+  },
+  timerOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  timerOption: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.lg,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  cancelButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
 });

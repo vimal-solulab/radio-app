@@ -22,6 +22,8 @@ interface MiniPlayerProps {
   onPlayPause: () => void;
   onPress: () => void;
   isVisible: boolean;
+  isLoading?: boolean;
+  loadingProgress?: number;
 }
 
 export function MiniPlayer({
@@ -33,6 +35,8 @@ export function MiniPlayer({
   onPlayPause,
   onPress,
   isVisible,
+  isLoading = false,
+  loadingProgress = 0,
 }: MiniPlayerProps) {
   const colorScheme = useColorScheme();
   const currentColors = colors[colorScheme ?? "light"];
@@ -95,24 +99,30 @@ export function MiniPlayer({
             {stationName}
           </Typography>
           <Typography
-          style={styles.stationDescription}
-           variant="caption"
-           color="white" 
-           numberOfLines={1}>
+            style={styles.stationDescription}
+            variant="caption"
+            color="white"
+            numberOfLines={1}
+          >
             {stationDescription}
           </Typography>
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.playButton,
-            {
-              backgroundColor: currentColors.accent,
-            },
-          ]}
-          onPress={onPlayPause}
-        >
-          {isPlaying ? (
+        <TouchableOpacity style={styles.playButton} onPress={onPlayPause}>
+          {isLoading ? (
+            <View style={styles.loadingProgressContainer}>
+
+          
+            <View
+              style={[
+                styles.loadingProgress,
+                {
+                  transform: [{ rotate: `${loadingProgress * 360}deg` }],
+                },
+              ]}
+            />   
+            </View>
+          ) : isPlaying ? (
             <Pause size={20} color="#fff" />
           ) : (
             <Play size={20} color="#fff" fill="#fff" />
@@ -173,15 +183,39 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: spacing.xs,
     shadowOffset: { width: 0, height: radius.xs },
     shadowOpacity: 0.1,
     shadowRadius: radius.xs,
     elevation: 2,
     borderWidth: 1,
     borderColor: colors.neutral.white,
+    backgroundColor: colors.natural.accent,
   },
   stationDescription: {
     opacity: 0.8,
+  },
+
+  loadingProgress: {
+    width: 50,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: radius.full,
+    backgroundColor: colors.natural.accent,
+    borderWidth: 5,
+    borderColor: colors.natural.accent,
+    borderTopColor: colors.neutral.white,
+    borderRightColor: colors.neutral.white,
+    borderBottomColor: "transparent",
+    borderLeftColor: colors.neutral.white,
+  },
+  loadingProgressContainer: {
+    width: 50,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.natural.accent,
   },
 });

@@ -7,6 +7,7 @@ export interface RadioStation {
   image?: string;
   category: 'recent' | 'recommended' | 'favorite' | 'top' | 'discover';
   country?: string;
+  url?: string;
 }
 
 export const mockStations: RadioStation[] = [
@@ -19,6 +20,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '2',
@@ -28,6 +30,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '3',
@@ -37,6 +40,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '4',
@@ -46,6 +50,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '5',
@@ -55,6 +60,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '6',
@@ -64,6 +70,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '7',
@@ -73,6 +80,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '8',
@@ -82,6 +90,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   
   // English Stations
@@ -93,6 +102,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'UK',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '10',
@@ -102,6 +112,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'USA',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '11',
@@ -111,6 +122,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '12',
@@ -120,6 +132,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   
   // Regional Indian Stations
@@ -131,6 +144,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '14',
@@ -140,6 +154,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '15',
@@ -149,6 +164,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '16',
@@ -158,6 +174,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '17',
@@ -167,6 +184,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '18',
@@ -176,6 +194,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   
   // International Stations
@@ -187,6 +206,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Sri Lanka',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '20',
@@ -196,6 +216,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Sri Lanka',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '21',
@@ -205,6 +226,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Sri Lanka',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '22',
@@ -214,6 +236,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'France',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '23',
@@ -223,6 +246,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Germany',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '24',
@@ -232,6 +256,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Spain',
+    url: 'http://94.130.113.214:8000/prog',
   },
   
   // AM Stations
@@ -243,6 +268,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '26',
@@ -252,6 +278,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'top',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '27',
@@ -261,6 +288,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'UK',
+    url: 'http://94.130.113.214:8000/chill',
   },
   
   // Web Stations
@@ -272,6 +300,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Global',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '29',
@@ -281,6 +310,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '30',
@@ -290,6 +320,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '31',
@@ -299,6 +330,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '32',
@@ -308,6 +340,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'India',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '33',
@@ -317,6 +350,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Global',
+    url: 'http://94.130.113.214:8000/chill',
   },
   {
     id: '34',
@@ -326,6 +360,7 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Global',
+    url: 'http://94.130.113.214:8000/prog',
   },
   {
     id: '35',
@@ -335,6 +370,29 @@ export const mockStations: RadioStation[] = [
     image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d4c?w=400&h=400&fit=crop&crop=center',
     category: 'discover',
     country: 'Global',
+    url: 'http://94.130.113.214:8000/chill',
+  },
+  
+  // New Online Radio Stations
+  {
+    id: '36',
+    name: 'Chill Radio',
+    frequency: 'Online',
+    description: 'Relaxing Chill Music & Ambient Sounds',
+    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=center',
+    category: 'discover',
+    country: 'Global',
+    url: 'http://94.130.113.214:8000/chill',
+  },
+  {
+    id: '37',
+    name: 'Progressive Radio',
+    frequency: 'Online',
+    description: 'Progressive Rock & Electronic Music',
+    image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop&crop=center',
+    category: 'discover',
+    country: 'Global',
+    url: 'http://94.130.113.214:8000/prog',
   },
 ];
 

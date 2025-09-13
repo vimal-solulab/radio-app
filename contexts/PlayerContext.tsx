@@ -1,16 +1,47 @@
-import { RadioStation } from '@/constants/radioData';
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import { mockStations, RadioStation } from '@/constants/radioData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Audio } from 'expo-av';
+import * as Notifications from 'expo-notifications';
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 interface PlayerContextType {
   currentStation: RadioStation | null;
   isPlaying: boolean;
   currentTrack: string;
+  volume: number;
+  bass: number;
+  treble: number;
+  balance: number;
+  audioEffects: {
+    reverb: boolean;
+    echo: boolean;
+    surround: boolean;
+  };
+  favorites: string[];
+  sleepTimer: number | null;
+  recentStations: string[];
+  shuffleMode: boolean;
+  isLoading: boolean;
+  loadingProgress: number;
+  error: string | null;
   setCurrentStation: (station: RadioStation | null) => void;
   setIsPlaying: (playing: boolean) => void;
   setCurrentTrack: (track: string) => void;
-  playStation: (station: RadioStation) => void;
-  pauseStation: () => void;
-  resumeStation: () => void;
+  setVolume: (volume: number) => void;
+  setBass: (bass: number) => void;
+  setTreble: (treble: number) => void;
+  setBalance: (balance: number) => void;
+  toggleAudioEffect: (effect: keyof PlayerContextType['audioEffects']) => void;
+  playStation: (station: RadioStation) => Promise<void>;
+  pauseStation: () => Promise<void>;
+  resumeStation: () => Promise<void>;
+  toggleFavorite: (stationId: string) => void;
+  isFavorite: (stationId: string) => boolean;
+  setSleepTimer: (minutes: number | null) => void;
+  playPreviousStation: () => void;
+  playNextStation: () => void;
+  toggleShuffle: () => void;
+  playRandomStation: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -19,19 +50,332 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [currentStation, setCurrentStation] = useState<RadioStation | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState('Now Playing');
+  const [volume, setVolume] = useState(0.7);
+  const [bass, setBass] = useState(0.5);
+  const [treble, setTreble] = useState(0.5);
+  const [balance, setBalance] = useState(0.5);
+  const [audioEffects, setAudioEffects] = useState({
+    reverb: false,
+    echo: false,
+    surround: false,
+  });
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [sleepTimer, setSleepTimer] = useState<number | null>(null);
+  const [recentStations, setRecentStations] = useState<string[]>([]);
+  const [shuffleMode, setShuffleMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  
+  const soundRef = useRef<Audio.Sound | null>(null);
 
-  const playStation = (station: RadioStation) => {
-    setCurrentStation(station);
-    setIsPlaying(true);
-    setCurrentTrack('Now Playing');
+  // Initialize audio and load data on mount
+  useEffect(() => {
+    initializeAudio();
+    loadFavorites();
+    loadRecentStations();
+    
+    return () => {
+      // Cleanup audio on unmount
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // Update volume when it changes
+  useEffect(() => {
+    if (soundRef.current) {
+      soundRef.current.setVolumeAsync(volume);
+    }
+  }, [volume]);
+
+  const loadFavorites = async () => {
+    try {
+      const storedFavorites = await AsyncStorage.getItem('favorites');
+      if (storedFavorites) {
+        setFavorites(JSON.parse(storedFavorites));
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
   };
 
-  const pauseStation = () => {
-    setIsPlaying(false);
+  const saveFavorites = async (newFavorites: string[]) => {
+    try {
+      await AsyncStorage.setItem('favorites', JSON.stringify(newFavorites));
+    } catch (error) {
+      console.error('Error saving favorites:', error);
+    }
   };
 
-  const resumeStation = () => {
-    setIsPlaying(true);
+  const loadRecentStations = async () => {
+    try {
+      const storedRecent = await AsyncStorage.getItem('recentStations');
+      if (storedRecent) {
+        setRecentStations(JSON.parse(storedRecent));
+      }
+    } catch (error) {
+      console.error('Error loading recent stations:', error);
+    }
+  };
+
+  const saveRecentStations = async (newRecent: string[]) => {
+    try {
+      await AsyncStorage.setItem('recentStations', JSON.stringify(newRecent));
+    } catch (error) {
+      console.error('Error saving recent stations:', error);
+    }
+  };
+
+  const addToRecentStations = (stationId: string) => {
+    const newRecent = [stationId, ...recentStations.filter(id => id !== stationId)].slice(0, 10);
+    setRecentStations(newRecent);
+    saveRecentStations(newRecent);
+  };
+
+  const initializeAudio = async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: true,
+        playsInSilentModeIOS: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+    } catch (error) {
+      console.error('Error initializing audio:', error);
+    }
+  };
+
+  const setupMediaNotifications = async () => {
+    try {
+      await Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
+    }
+  };
+
+  const showMediaNotification = async (station: RadioStation) => {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: station.name,
+          body: station.description || 'Now Playing',
+          data: { 
+            stationId: station.id,
+            action: 'media_controls'
+          },
+          categoryIdentifier: 'media_controls',
+        },
+        trigger: null,
+      });
+    } catch (error) {
+      console.error('Error showing media notification:', error);
+    }
+  };
+
+  const hideMediaNotification = async () => {
+    try {
+      await Notifications.dismissAllNotificationsAsync();
+    } catch (error) {
+      console.error('Error hiding media notification:', error);
+    }
+  };
+
+  const playStation = async (station: RadioStation) => {
+    try {
+      setIsLoading(true);
+      setLoadingProgress(0);
+      setError(null);
+      
+      // Stop current audio if playing
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      // Check if station has URL
+      if (!station.url) {
+        setError('No streaming URL available for this station');
+        setIsLoading(false);
+        setLoadingProgress(0);
+        return;
+      }
+
+      // Simulate loading progress
+      const progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev >= 0.9) {
+            clearInterval(progressInterval);
+            return 0.9;
+          }
+          return prev + 0.1;
+        });
+      }, 200);
+
+      // Create new sound object
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: station.url },
+        { 
+          shouldPlay: true,
+          volume: volume,
+          isLooping: false,
+        }
+      );
+
+      clearInterval(progressInterval);
+      setLoadingProgress(1);
+
+      soundRef.current = sound;
+      setCurrentStation(station);
+      setIsPlaying(true);
+      setCurrentTrack('Now Playing');
+      addToRecentStations(station.id);
+      
+      // Setup media notifications
+      await setupMediaNotifications();
+      await showMediaNotification(station);
+      
+      setIsLoading(false);
+      setLoadingProgress(0);
+    } catch (error) {
+      console.error('Error playing station:', error);
+      setError('Failed to play station. Please check your internet connection.');
+      setIsLoading(false);
+      setLoadingProgress(0);
+      setIsPlaying(false);
+    }
+  };
+
+  const pauseStation = useCallback(async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.pauseAsync();
+        setIsPlaying(false);
+        await hideMediaNotification();
+      }
+    } catch (error) {
+      console.error('Error pausing station:', error);
+    }
+  }, []);
+
+  // Sleep timer effect
+  useEffect(() => {
+    if (sleepTimer && sleepTimer > 0) {
+      const timer = setTimeout(() => {
+        pauseStation();
+        setSleepTimer(null);
+      }, sleepTimer * 60 * 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [sleepTimer, pauseStation]);
+
+  const resumeStation = async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.playAsync();
+        setIsPlaying(true);
+        if (currentStation) {
+          await showMediaNotification(currentStation);
+        }
+      }
+    } catch (error) {
+      console.error('Error resuming station:', error);
+    }
+  };
+
+  const toggleFavorite = (stationId: string) => {
+    const newFavorites = favorites.includes(stationId)
+      ? favorites.filter(id => id !== stationId)
+      : [...favorites, stationId];
+    
+    setFavorites(newFavorites);
+    saveFavorites(newFavorites);
+  };
+
+  const isFavorite = (stationId: string) => {
+    return favorites.includes(stationId);
+  };
+
+  const playPreviousStation = () => {
+    if (!currentStation) return;
+
+    // Always use all stations for navigation to ensure all stations are accessible
+    const allStationIds = mockStations.map(s => s.id);
+    const currentIndex = allStationIds.findIndex(id => id === currentStation.id);
+    
+    if (currentIndex > 0) {
+      const previousStationId = allStationIds[currentIndex - 1];
+      const previousStation = mockStations.find(s => s.id === previousStationId);
+      if (previousStation) {
+        playStation(previousStation);
+      }
+    } else {
+      // If at the beginning, go to the last station
+      const lastStationId = allStationIds[allStationIds.length - 1];
+      const lastStation = mockStations.find(s => s.id === lastStationId);
+      if (lastStation) {
+        playStation(lastStation);
+      }
+    }
+  };
+
+  const playNextStation = () => {
+    if (!currentStation) return;
+
+    if (shuffleMode) {
+      playRandomStation();
+      return;
+    }
+
+    // Always use all stations for navigation to ensure all stations are accessible
+    const allStationIds = mockStations.map(s => s.id);
+    const currentIndex = allStationIds.findIndex(id => id === currentStation.id);
+    
+    if (currentIndex < allStationIds.length - 1) {
+      const nextStationId = allStationIds[currentIndex + 1];
+      const nextStation = mockStations.find(s => s.id === nextStationId);
+      if (nextStation) {
+        playStation(nextStation);
+      }
+    } else {
+      // If at the end, go to the first station
+      const firstStationId = allStationIds[0];
+      const firstStation = mockStations.find(s => s.id === firstStationId);
+      if (firstStation) {
+        playStation(firstStation);
+      }
+    }
+  };
+
+  const toggleShuffle = () => {
+    setShuffleMode(!shuffleMode);
+  };
+
+  const playRandomStation = () => {
+    const availableStations = mockStations.filter(station => station.id !== currentStation?.id);
+    if (availableStations.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availableStations.length);
+      const randomStation = availableStations[randomIndex];
+      playStation(randomStation);
+    }
+  };
+
+  const toggleAudioEffect = (effect: keyof typeof audioEffects) => {
+    setAudioEffects(prev => ({
+      ...prev,
+      [effect]: !prev[effect]
+    }));
   };
 
   return (
@@ -40,12 +384,36 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         currentStation,
         isPlaying,
         currentTrack,
+        volume,
+        bass,
+        treble,
+        balance,
+        audioEffects,
+        favorites,
+        sleepTimer,
+        recentStations,
+        shuffleMode,
+        isLoading,
+        loadingProgress,
+        error,
         setCurrentStation,
         setIsPlaying,
         setCurrentTrack,
+        setVolume,
+        setBass,
+        setTreble,
+        setBalance,
+        toggleAudioEffect,
         playStation,
         pauseStation,
         resumeStation,
+        toggleFavorite,
+        isFavorite,
+        setSleepTimer,
+        playPreviousStation,
+        playNextStation,
+        toggleShuffle,
+        playRandomStation,
       }}
     >
       {children}

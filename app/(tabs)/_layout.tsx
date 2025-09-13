@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { currentStation, isPlaying, pauseStation, resumeStation } =
+  const { currentStation, isPlaying, pauseStation, resumeStation, isLoading, loadingProgress } =
     usePlayer();
   const insets = useSafeAreaInsets();
 
@@ -81,6 +81,8 @@ export default function TabLayout() {
           onPlayPause={handleMiniPlayerPlayPause}
           onPress={handleMiniPlayerPress}
           isVisible={!!currentStation}
+          isLoading={isLoading}
+          loadingProgress={loadingProgress}
         />
       )}
     </View>
