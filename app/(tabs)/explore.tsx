@@ -12,7 +12,7 @@ import { typography } from "@/constants/typography";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Pause, Play, Search } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   FlatList,
   Image,
@@ -27,9 +27,10 @@ type SearchTabType = "top" | "discover" | "top40";
 export default function SearchScreen() {
   const colorScheme = useColorScheme();
   const currentColors = colors[colorScheme ?? "light"];
-  const { currentStation, isPlaying, playStation, pauseStation } = usePlayer();
+  const { currentStation, isPlaying, playStation, pauseStation, isLoading } = usePlayer();
   const [activeTab, setActiveTab] = useState<SearchTabType>("top");
   const [searchQuery, setSearchQuery] = useState("");
+  const lastClickTime = useRef<number>(0);
 
   const topStations = getStationsByCategory("top");
   const discoverStations = getStationsByCategory("discover");
@@ -42,6 +43,20 @@ export default function SearchScreen() {
   ];
 
   const handlePlayPress = (station: RadioStation) => {
+    // Debounce rapid clicks (prevent clicks within 500ms)
+    const now = Date.now();
+    if (now - lastClickTime.current < 500) {
+      console.log('Click debounced - too soon after last click');
+      return;
+    }
+    lastClickTime.current = now;
+
+    // Prevent action if already loading
+    if (isLoading) {
+      console.log('Already loading, ignoring click');
+      return;
+    }
+
     if (currentStation?.id === station.id && isPlaying) {
       pauseStation();
     } else {

@@ -111,16 +111,14 @@ export function MiniPlayer({
         <TouchableOpacity style={styles.playButton} onPress={onPlayPause}>
           {isLoading ? (
             <View style={styles.loadingProgressContainer}>
-
-          
-            <View
-              style={[
-                styles.loadingProgress,
-                {
-                  transform: [{ rotate: `${loadingProgress * 360}deg` }],
-                },
-              ]}
-            />   
+              <View
+                style={[
+                  styles.loadingProgress,
+                  {
+                    transform: [{ rotate: `${loadingProgress * 360}deg` }],
+                  },
+                ]}
+              />
             </View>
           ) : isPlaying ? (
             <Pause size={20} color="#fff" />

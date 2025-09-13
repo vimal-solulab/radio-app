@@ -44,6 +44,14 @@
         {
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for audio recording."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "experiments": {

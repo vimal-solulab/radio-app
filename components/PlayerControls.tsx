@@ -104,7 +104,7 @@ export function PlayerControls({
                   styles.loadingProgress,
                   {
                     transform: [{ rotate: `${loadingProgress * 360}deg` }],
-                  }
+                  },
                 ]}
               />
             ) : isPlaying ? (

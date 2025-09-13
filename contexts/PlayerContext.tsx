@@ -2,6 +2,7 @@ import { mockStations, RadioStation } from '@/constants/radioData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 
 interface PlayerContextType {
   currentStation: RadioStation | null;
@@ -68,6 +69,46 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   
   const soundRef = useRef<Audio.Sound | null>(null);
 
+  // Check if notifications are available (not available in Expo Go)
+  const isNotificationsAvailable = () => {
+    try {
+      // Check if we're in Expo Go by looking for the Expo Go user agent
+      return !__DEV__ || Platform.OS === 'ios' || !(global as any).__expo;
+    } catch {
+      return false;
+    }
+  };
+
+  // Dynamic import for notifications to avoid import errors in Expo Go
+  const getNotifications = useCallback(async () => {
+    if (!isNotificationsAvailable()) {
+      return null;
+    }
+    
+    try {
+      const Notifications = await import('expo-notifications');
+      return Notifications;
+    } catch (error) {
+      console.log('Notifications not available:', error);
+      return null;
+    }
+  }, []);
+
+  const hideMediaNotification = useCallback(async () => {
+    const Notifications = await getNotifications();
+    if (!Notifications) {
+      console.log('Notifications not available - skipping notification hide');
+      return;
+    }
+
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      console.log('Media notification hidden');
+    } catch (error) {
+      console.error('Error hiding media notification:', error);
+    }
+  }, [getNotifications]);
+
   const stopAllAudio = useCallback(async (clearStation = false) => {
     try {
       if (soundRef.current) {
@@ -83,7 +124,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error stopping all audio:', error);
     }
-  }, []);
+  }, [hideMediaNotification]);
 
   // Initialize audio and load data on mount
   useEffect(() => {
@@ -96,6 +137,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       stopAllAudio(true);
     };
   }, [stopAllAudio]);
+
 
   // Update volume when it changes
   useEffect(() => {
@@ -142,11 +184,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addToRecentStations = (stationId: string) => {
+  const addToRecentStations = useCallback((stationId: string) => {
     const newRecent = [stationId, ...recentStations.filter(id => id !== stationId)].slice(0, 10);
     setRecentStations(newRecent);
     saveRecentStations(newRecent);
-  };
+  }, [recentStations]);
 
   const initializeAudio = async () => {
     try {
@@ -164,37 +206,189 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setupMediaNotifications = async () => {
-    // Notifications disabled for Expo Go compatibility
-    // This function is kept for future development builds
+  const setupMediaNotifications = useCallback(async () => {
+    const Notifications = await getNotifications();
+    if (!Notifications) {
+      console.log('Notifications not available in Expo Go - skipping setup');
+      return;
+    }
+
     try {
-      console.log('Media notifications setup skipped for Expo Go compatibility');
+      // Request permissions for notifications
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Notification permission not granted');
+        return;
+      }
+
+      // Configure notification handler
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+
+      // Define notification categories with actions
+      await Notifications.setNotificationCategoryAsync('MEDIA_CONTROLS', [
+        {
+          identifier: 'PLAY_PAUSE',
+          buttonTitle: 'Play/Pause',
+          options: { opensAppToForeground: false },
+        },
+        {
+          identifier: 'NEXT',
+          buttonTitle: 'Next',
+          options: { opensAppToForeground: false },
+        },
+        {
+          identifier: 'PREVIOUS',
+          buttonTitle: 'Previous',
+          options: { opensAppToForeground: false },
+        },
+        {
+          identifier: 'FAVORITE',
+          buttonTitle: '❤️',
+          options: { opensAppToForeground: false },
+        },
+      ]);
+
+      console.log('Media notifications setup completed');
     } catch (error) {
       console.error('Error setting up notifications:', error);
     }
-  };
+  }, [getNotifications]);
 
-  const showMediaNotification = async (station: RadioStation) => {
-    // Notifications disabled for Expo Go compatibility
-    // This function is kept for future development builds
+  const showMediaNotification = useCallback(async (station: RadioStation) => {
+    const Notifications = await getNotifications();
+    if (!Notifications) {
+      console.log('Notifications not available - skipping notification display');
+      return;
+    }
+
     try {
-      console.log(`Media notification for ${station.name} skipped for Expo Go compatibility`);
+      // Cancel any existing media notification
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      
+      // Update notification category with dynamic favorite button
+      const isStationFavorite = favorites.includes(station.id);
+      await Notifications.setNotificationCategoryAsync('MEDIA_CONTROLS', [
+        {
+          identifier: 'PLAY_PAUSE',
+          buttonTitle: 'Play/Pause',
+          options: { opensAppToForeground: false },
+        },
+        {
+          identifier: 'NEXT',
+          buttonTitle: 'Next',
+          options: { opensAppToForeground: false },
+        },
+        {
+          identifier: 'PREVIOUS',
+          buttonTitle: 'Previous',
+          options: { opensAppToForeground: false },
+        },
+        {
+          identifier: 'FAVORITE',
+          buttonTitle: isStationFavorite ? '❤️' : '🤍',
+          options: { opensAppToForeground: false },
+        },
+      ]);
+      
+      // Create media notification with controls
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: station.name,
+          body: station.frequency || 'Radio Station',
+          data: { 
+            stationId: station.id,
+            stationName: station.name,
+            isPlaying: true,
+            isFavorite: isStationFavorite
+          },
+          categoryIdentifier: 'MEDIA_CONTROLS',
+          sound: false,
+        },
+        trigger: null, // Show immediately
+        identifier: 'MEDIA_PLAYER',
+      });
+
+      console.log(`Media notification shown for ${station.name}`);
     } catch (error) {
       console.error('Error showing media notification:', error);
     }
-  };
+  }, [favorites, getNotifications]);
 
-  const hideMediaNotification = async () => {
-    // Notifications disabled for Expo Go compatibility
-    // This function is kept for future development builds
-    try {
-      console.log('Media notification hide skipped for Expo Go compatibility');
-    } catch (error) {
-      console.error('Error hiding media notification:', error);
+  const updateMediaNotification = useCallback(async (station: RadioStation, playing: boolean) => {
+    const Notifications = await getNotifications();
+    if (!Notifications) {
+      console.log('Notifications not available - skipping notification update');
+      return;
     }
-  };
 
-  const playStation = async (station: RadioStation) => {
+    try {
+      // Cancel existing notification
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      
+      if (playing) {
+        // Update notification category with dynamic favorite button
+        const isStationFavorite = favorites.includes(station.id);
+        await Notifications.setNotificationCategoryAsync('MEDIA_CONTROLS', [
+          {
+            identifier: 'PLAY_PAUSE',
+            buttonTitle: 'Play/Pause',
+            options: { opensAppToForeground: false },
+          },
+          {
+            identifier: 'NEXT',
+            buttonTitle: 'Next',
+            options: { opensAppToForeground: false },
+          },
+          {
+            identifier: 'PREVIOUS',
+            buttonTitle: 'Previous',
+            options: { opensAppToForeground: false },
+          },
+          {
+            identifier: 'FAVORITE',
+            buttonTitle: isStationFavorite ? '❤️' : '🤍',
+            options: { opensAppToForeground: false },
+          },
+        ]);
+        
+        // Show updated notification
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: station.name,
+            body: station.frequency || 'Radio Station',
+            data: { 
+              stationId: station.id,
+              stationName: station.name,
+              isPlaying: playing,
+              isFavorite: isStationFavorite
+            },
+            categoryIdentifier: 'MEDIA_CONTROLS',
+            sound: false,
+          },
+          trigger: null,
+          identifier: 'MEDIA_PLAYER',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating media notification:', error);
+    }
+  }, [favorites, getNotifications]);
+
+  const playStation = useCallback(async (station: RadioStation) => {
+    // Prevent multiple simultaneous calls
+    if (isLoading) {
+      console.log('Already loading, ignoring playStation call');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setLoadingProgress(0);
@@ -205,7 +399,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setCurrentTrack('Now Playing');
       addToRecentStations(station.id);
       
-      // Stop current audio if playing
+      // Stop current audio if playing - ensure complete cleanup
       if (soundRef.current) {
         try {
           await soundRef.current.stopAsync();
@@ -280,14 +474,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setIsPlaying(false);
       setCurrentStation(null); // Clear station on error
     }
-  };
+  }, [isLoading, volume, addToRecentStations, showMediaNotification, setupMediaNotifications]);
 
   const pauseStation = useCallback(async () => {
     try {
       if (soundRef.current) {
         await soundRef.current.pauseAsync();
         setIsPlaying(false);
-        await hideMediaNotification();
+        // Update notification to show paused state
+        if (currentStation) {
+          await updateMediaNotification(currentStation, false);
+        }
       }
     } catch (error) {
       console.error('Error pausing station:', error);
@@ -296,12 +493,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         try {
           await soundRef.current.stopAsync();
           setIsPlaying(false);
+          await hideMediaNotification();
         } catch (stopError) {
           console.error('Error stopping station:', stopError);
         }
       }
     }
-  }, []);
+  }, [currentStation, updateMediaNotification, hideMediaNotification]);
 
   // Sleep timer effect
   useEffect(() => {
@@ -315,34 +513,39 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [sleepTimer, pauseStation]);
 
-  const resumeStation = async () => {
+  const resumeStation = useCallback(async () => {
     try {
       if (soundRef.current) {
         await soundRef.current.playAsync();
         setIsPlaying(true);
         if (currentStation) {
-          await showMediaNotification(currentStation);
+          await updateMediaNotification(currentStation, true);
         }
       }
     } catch (error) {
       console.error('Error resuming station:', error);
     }
-  };
+  }, [currentStation, updateMediaNotification]);
 
-  const toggleFavorite = (stationId: string) => {
+  const toggleFavorite = useCallback(async (stationId: string) => {
     const newFavorites = favorites.includes(stationId)
       ? favorites.filter(id => id !== stationId)
       : [...favorites, stationId];
     
     setFavorites(newFavorites);
     saveFavorites(newFavorites);
-  };
+    
+    // Update notification if this station is currently playing
+    if (currentStation && currentStation.id === stationId && isPlaying) {
+      await updateMediaNotification(currentStation, true);
+    }
+  }, [favorites, currentStation, isPlaying, updateMediaNotification]);
 
   const isFavorite = (stationId: string) => {
     return favorites.includes(stationId);
   };
 
-  const playPreviousStation = async () => {
+  const playPreviousStation = useCallback(async () => {
     if (!currentStation) return;
 
     // Always use all stations for navigation to ensure all stations are accessible
@@ -363,9 +566,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         await playStation(lastStation);
       }
     }
-  };
+  }, [currentStation, playStation]);
 
-  const playNextStation = async () => {
+  const playRandomStation = useCallback(async () => {
+    const availableStations = mockStations.filter(station => station.id !== currentStation?.id);
+    if (availableStations.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availableStations.length);
+      const randomStation = availableStations[randomIndex];
+      await playStation(randomStation);
+    }
+  }, [currentStation, playStation]);
+
+  const playNextStation = useCallback(async () => {
     if (!currentStation) return;
 
     if (shuffleMode) {
@@ -391,19 +603,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         await playStation(firstStation);
       }
     }
-  };
+  }, [currentStation, shuffleMode, playRandomStation, playStation]);
 
   const toggleShuffle = () => {
     setShuffleMode(!shuffleMode);
-  };
-
-  const playRandomStation = async () => {
-    const availableStations = mockStations.filter(station => station.id !== currentStation?.id);
-    if (availableStations.length > 0) {
-      const randomIndex = Math.floor(Math.random() * availableStations.length);
-      const randomStation = availableStations[randomIndex];
-      await playStation(randomStation);
-    }
   };
 
   const toggleAudioEffect = (effect: keyof typeof audioEffects) => {
@@ -412,6 +615,64 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       [effect]: !prev[effect]
     }));
   };
+
+  // Handle notification responses (media controls)
+  useEffect(() => {
+    let subscription: any = null;
+
+    const setupNotificationListener = async () => {
+      const Notifications = await getNotifications();
+      if (!Notifications) {
+        console.log('Notifications not available - skipping notification listener setup');
+        return;
+      }
+
+      subscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
+        const { actionIdentifier, notification } = response;
+        
+        if (notification.request.identifier === 'MEDIA_PLAYER') {
+          switch (actionIdentifier) {
+            case 'PLAY_PAUSE':
+              if (isPlaying) {
+                pauseStation();
+              } else if (currentStation) {
+                resumeStation();
+              }
+              break;
+            case 'NEXT':
+              playNextStation();
+              break;
+            case 'PREVIOUS':
+              playPreviousStation();
+              break;
+            case 'FAVORITE':
+              if (currentStation) {
+                toggleFavorite(currentStation.id);
+              }
+              break;
+            default:
+              // Handle notification tap
+              if (currentStation) {
+                if (isPlaying) {
+                  pauseStation();
+                } else {
+                  resumeStation();
+                }
+              }
+              break;
+          }
+        }
+      });
+    };
+
+    setupNotificationListener();
+
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, [isPlaying, currentStation, pauseStation, resumeStation, playNextStation, playPreviousStation, toggleFavorite, getNotifications]);
 
   return (
     <PlayerContext.Provider
