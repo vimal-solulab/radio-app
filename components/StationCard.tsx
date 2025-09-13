@@ -1,8 +1,8 @@
 import { colors } from "@/constants/colors";
-
 import { Pause, Play } from "lucide-react-native";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Typography } from "./typography";
 import { Typography } from "./typography";
 
 interface StationCardProps {

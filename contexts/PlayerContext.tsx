@@ -433,7 +433,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         });
       }, 200);
 
-      // Create new sound object
+      // Create new sound object with enhanced configuration for release builds
       const { sound } = await Audio.Sound.createAsync(
         { uri: station.url },
         { 
@@ -441,6 +441,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           volume: volume,
           isLooping: false,
           progressUpdateIntervalMillis: 1000,
+          // Enhanced configuration for better compatibility
+          androidImplementation: 'MediaPlayer',
+          iosImplementation: 'AVPlayer',
         },
         (status) => {
           if (status.isLoaded) {
