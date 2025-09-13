@@ -1,50 +1,106 @@
-# Welcome to your Expo app 👋
+# Radio Streaming App 📻
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern React Native (Expo) radio streaming application with a beautiful dark blue/purple gradient theme and iOS-style design.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Home Screen**: Recent, Recommended, and Favorite radio stations with horizontal scrolling cards
+- **Search Screen**: Search functionality with Top Stations, Discover, and Top 40 tabs
+- **Player Screen**: Full-screen player with station logo, controls, and volume slider
+- **Mini Player**: Sticky bottom player that persists across screens
+- **Modern UI**: Dark blue/purple gradient background with white cards and rounded corners
+- **Responsive Design**: Clean, minimal design with consistent spacing and shadows
 
+## Design Theme
+
+- **Background**: Dark blue to purple gradient (`#1a1a2e` → `#16213e`)
+- **Accent Color**: Deep purple (`#3f2b96`) with neon effect
+- **Cards**: White background with rounded corners and soft shadows
+- **Typography**: Bold modern fonts with high contrast
+- **Navigation**: Bottom tab navigation with 3 tabs (Home, Search, Player)
+
+## Screens
+
+### 1. Home Screen
+- Top tabs: Recent, Recommended, Search, Top
+- Horizontal scrolling station cards
+- Favorite stations section
+- Sticky mini-player at bottom
+
+### 2. Search Screen
+- Search bar with placeholder "Search station"
+- Tabs: Top Stations, Discover, Top 40
+- Vertical list of radio stations
+- Station logo, name, frequency, and play button
+
+### 3. Player Screen
+- Large circular station logo in center
+- Station name and description
+- Music controls (Previous, Play/Pause, Next)
+- Volume slider
+- Bottom icons (Sleep timer, Favorite, Settings)
+
+## Components
+
+- **StationCard**: Reusable station card with different sizes (small, medium, large)
+- **MiniPlayer**: Sticky bottom player component
+- **PlayerControls**: Full-screen player controls
+- **GradientBackground**: Dark gradient background wrapper
+
+## Getting Started
+
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. Start the development server:
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+3. Open the app in:
+   - iOS Simulator (press `i`)
+   - Android Emulator (press `a`)
+   - Expo Go app on your device (scan QR code)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app/
+├── (tabs)/
+│   ├── index.tsx      # Home screen
+│   ├── explore.tsx    # Search screen
+│   ├── player.tsx     # Player screen
+│   └── _layout.tsx    # Tab navigation
+components/
+├── StationCard.tsx    # Station card component
+├── MiniPlayer.tsx     # Mini player component
+├── PlayerControls.tsx # Player controls component
+└── GradientBackground.tsx # Background wrapper
+constants/
+├── colors.ts          # Color scheme
+├── radioData.ts       # Mock radio station data
+└── theme.ts           # Theme configuration
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Technologies Used
 
-## Learn more
+- **React Native** with **Expo**
+- **TypeScript** for type safety
+- **React Navigation** for bottom tabs
+- **Lucide React Native** for icons
+- **Expo Router** for file-based routing
 
-To learn more about developing your project with Expo, look at the following resources:
+## Mock Data
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The app includes mock radio station data with stations from various countries including Sri Lanka, UK, France, Germany, and Spain. You can easily replace this with real radio streaming data.
 
-## Join the community
+## Customization
 
-Join our community of developers creating universal apps.
+- Update `constants/colors.ts` to change the color scheme
+- Modify `constants/radioData.ts` to add your own radio stations
+- Customize components in the `components/` directory
+- Adjust styling in each screen's StyleSheet
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Enjoy your modern radio streaming app! 🎵
