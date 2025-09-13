@@ -99,7 +99,7 @@ The app includes mock radio station data with stations from various countries in
 ## Customization
 
 - Update `constants/colors.ts` to change the color scheme
-- Modify `constants/radioData.ts` to add your own radio stations
+- Modify `store/radioData.ts` to add your own radio stations
 - Customize components in the `components/` directory
 - Adjust styling in each screen's StyleSheet
 

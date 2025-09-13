@@ -1,20 +1,21 @@
 import { GradientBackground } from "@/components/GradientBackground";
-import { MiniPlayer } from "@/components/MiniPlayer";
+import { Typography } from "@/components/typography";
 import { colors } from "@/constants/colors";
+import { radius } from "@/constants/radius";
+import { spacing } from "@/constants/spacing";
+import { typography } from "@/constants/typography";
+import { usePlayer } from "@/contexts/PlayerContext";
 import {
   getStationsByCategory,
-  mockStations,
   RadioStation,
   searchStations,
-} from "@/constants/radioData";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Search } from "lucide-react-native";
-import React, { useState } from "react";
+} from "@/store/radioData";
+import { Pause, Play, Search } from "lucide-react-native";
+import React, { useRef, useState } from "react";
 import {
   FlatList,
   Image,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -23,14 +24,11 @@ import {
 type SearchTabType = "top" | "discover" | "top40";
 
 export default function SearchScreen() {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
+  
+  const { currentStation, isPlaying, playStation, pauseStation, isLoading } = usePlayer();
   const [activeTab, setActiveTab] = useState<SearchTabType>("top");
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentStation, setCurrentStation] = useState<RadioStation | null>(
-    mockStations[0]
-  );
-  const [isPlaying, setIsPlaying] = useState(false);
+  const lastClickTime = useRef<number>(0);
 
   const topStations = getStationsByCategory("top");
   const discoverStations = getStationsByCategory("discover");
@@ -43,70 +41,87 @@ export default function SearchScreen() {
   ];
 
   const handlePlayPress = (station: RadioStation) => {
-    setCurrentStation(station);
-    setIsPlaying(!isPlaying);
-  };
+    // Debounce rapid clicks (prevent clicks within 500ms)
+    const now = Date.now();
+    if (now - lastClickTime.current < 500) {
+      console.log('Click debounced - too soon after last click');
+      return;
+    }
+    lastClickTime.current = now;
 
-  const handleMiniPlayerPress = () => {
-    // Navigate to player screen
-  };
+    // Prevent action if already loading
+    if (isLoading) {
+      console.log('Already loading, ignoring click');
+      return;
+    }
 
-  const handleMiniPlayerPlayPause = () => {
-    setIsPlaying(!isPlaying);
+    if (currentStation?.id === station.id && isPlaying) {
+      pauseStation();
+    } else {
+      playStation(station);
+    }
   };
 
   const getGradientStyle = (id: string) => {
     const gradients = [
-      ['#FF6B6B', '#4ECDC4'], // Red to teal
-      ['#45B7D1', '#96CEB4'], // Blue to green
-      ['#F093FB', '#F5576C'], // Pink to red
-      ['#4FACFE', '#00F2FE'], // Blue to cyan
-      ['#43E97B', '#38F9D7'], // Green to cyan
-      ['#FA709A', '#FEE140'], // Pink to yellow
+      ["#FF6B6B", "#4ECDC4"], // Red to teal
+      ["#45B7D1", "#96CEB4"], // Blue to green
+      ["#F093FB", "#F5576C"], // Pink to red
+      ["#4FACFE", "#00F2FE"], // Blue to cyan
+      ["#43E97B", "#38F9D7"], // Green to cyan
+      ["#FA709A", "#FEE140"], // Pink to yellow
     ];
-    
+
     const gradientIndex = parseInt(id) % gradients.length;
     return gradients[gradientIndex];
   };
 
   const renderStationRow = ({ item }: { item: RadioStation }) => {
     const [gradientStart, gradientEnd] = getGradientStyle(item.id);
-    
+
     return (
       <View style={styles.stationRow}>
         <View style={styles.stationInfo}>
           <View
             style={[
               styles.stationLogo,
-              { 
+              {
                 backgroundColor: gradientStart,
                 shadowColor: gradientStart,
               },
             ]}
           >
             {item.image ? (
-              <Image 
-                source={{ uri: item.image }} 
+              <Image
+                source={{ uri: item.image }}
                 style={styles.stationLogoImage}
                 resizeMode="cover"
               />
             ) : (
-              <Text style={styles.stationLogoText}>{item.name.charAt(0)}</Text>
+              <Typography
+                style={styles.stationLogoText}
+                color="white"
+                weight="bold"
+              >
+                {item.name.charAt(0)}
+              </Typography>
             )}
-            <View style={[styles.gradientOverlay, { backgroundColor: gradientEnd }]} />
+            <View
+              style={[styles.gradientOverlay, { backgroundColor: gradientEnd }]}
+            />
           </View>
           <View style={styles.stationDetails}>
-            <Text style={[styles.stationName, { color: currentColors.text }]}>
-              {item.name}
-            </Text>
-            <Text
-              style={[
-                styles.stationFrequency,
-                { color: currentColors.textSecondary },
-              ]}
+            <Typography
+              color="primary"
+              variant="body"
+              weight="bold"
+              numberOfLines={1}
             >
+              {item.name}
+            </Typography>
+            <Typography color="secondary" variant="body2" numberOfLines={1}>
               {item.frequency}
-            </Text>
+            </Typography>
           </View>
         </View>
         <TouchableOpacity
@@ -115,29 +130,21 @@ export default function SearchScreen() {
             {
               backgroundColor:
                 currentStation?.id === item.id && isPlaying
-                  ? currentColors.accent
+                  ? colors.natural.accent
                   : "rgba(63, 43, 150, 0.15)",
               shadowColor:
                 currentStation?.id === item.id && isPlaying
-                  ? currentColors.accent
+                  ? colors.natural.accent
                   : "rgba(0, 0, 0, 0.1)",
             },
           ]}
           onPress={() => handlePlayPress(item)}
         >
-          <Text
-            style={[
-              styles.playButtonText,
-              {
-                color:
-                  currentStation?.id === item.id && isPlaying
-                    ? "#fff"
-                    : currentColors.accent,
-              },
-            ]}
-          >
-            {currentStation?.id === item.id && isPlaying ? "⏸" : "▶"}
-          </Text>
+          {currentStation?.id === item.id && isPlaying ? (
+            <Pause size={20} color="#fff" />
+          ) : (
+            <Play size={20} color="#fff" fill="#fff" />
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -168,18 +175,18 @@ export default function SearchScreen() {
           <View
             style={[
               styles.searchBar,
-              { backgroundColor: currentColors.cardBackground },
+              { backgroundColor: colors.natural.cardBackground },
             ]}
           >
             <Search
               size={20}
-              color={currentColors.textSecondary}
+              color={colors.text.secondary}
               style={styles.searchIcon}
             />
             <TextInput
-              style={[styles.searchInput, { color: "#000" }]}
+              style={styles.searchInput}
+              placeholderTextColor={colors.text.secondary}
               placeholder="Search station"
-              placeholderTextColor="#999"
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -189,19 +196,12 @@ export default function SearchScreen() {
         {/* Search Results Header */}
         {searchQuery && (
           <View style={styles.searchResultsHeader}>
-            <Text
-              style={[styles.searchResultsTitle, { color: currentColors.text }]}
-            >
+            <Typography variant="body" color="primary" weight="bold">
               {searchQuery}
-            </Text>
-            <Text
-              style={[
-                styles.searchResultsCount,
-                { color: currentColors.textSecondary },
-              ]}
-            >
+            </Typography>
+            <Typography color="secondary" variant="body2">
               {searchResults.length} stations found
-            </Text>
+            </Typography>
           </View>
         )}
 
@@ -214,24 +214,17 @@ export default function SearchScreen() {
                 style={[
                   styles.tab,
                   activeTab === tab.key && {
-                    backgroundColor: currentColors.accent,
+                    backgroundColor: colors.natural.accent,
                   },
                 ]}
                 onPress={() => setActiveTab(tab.key)}
               >
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color:
-                        activeTab === tab.key
-                          ? "#fff"
-                          : currentColors.textSecondary,
-                    },
-                  ]}
+                <Typography
+                  color={activeTab === tab.key ? "white" : "primary"}
+                  weight={activeTab === tab.key ? "bold" : "normal"}
                 >
                   {tab.label}
-                </Text>
+                </Typography>
               </TouchableOpacity>
             ))}
           </View>
@@ -246,19 +239,6 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.stationListContent}
         />
-
-        {/* Mini Player */}
-        {currentStation && (
-          <MiniPlayer
-            stationName={currentStation.name}
-            stationDescription={currentStation.description}
-            image={currentStation.image}
-            logo={currentStation.logo}
-            isPlaying={isPlaying}
-            onPlayPause={handleMiniPlayerPlayPause}
-            onPress={handleMiniPlayerPress}
-          />
-        )}
       </View>
     </GradientBackground>
   );
@@ -267,72 +247,68 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background.main,
     paddingTop: 60,
   },
   searchContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: spacing.ml,
+    marginBottom: spacing.ml,
   },
   searchBar: {
+    backgroundColor: colors.background.card,
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 25,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.ml,
+    paddingVertical: spacing.xms,
+    borderWidth: 1,
+    borderColor: colors.border.light,
   },
   searchIcon: {
-    marginRight: 12,
+    marginRight: spacing.ml,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
   },
   searchResultsHeader: {
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.ml,
     marginBottom: 16,
   },
   searchResultsTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: typography.fontSize["4xl"],
+    fontWeight: typography.fontWeight.bold,
     marginBottom: 4,
   },
-  searchResultsCount: {
-    fontSize: 14,
-  },
+  searchResultsCount: {},
   tabContainer: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: spacing.ml,
+    marginBottom: spacing.ml,
   },
   tab: {
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.ml,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: radius.full,
     marginRight: 8,
   },
-  tabText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
+
   stationList: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing.ml,
   },
   stationListContent: {
-    paddingBottom: 100, // Space for mini player
+    paddingBottom: 180, // Space for mini player (90px) + bottom navigation (90px)
   },
   stationRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 18,
-    paddingHorizontal: 4,
+    paddingVertical: spacing.ms,
+    paddingHorizontal: spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: colors.border.light,
+    gap: spacing.ms,
   },
   stationInfo: {
     flexDirection: "row",
@@ -377,18 +353,10 @@ const styles = StyleSheet.create({
   },
   stationDetails: {
     flex: 1,
+    alignItems: "flex-start",
+    gap: spacing.xms,
   },
-  stationName: {
-    fontSize: 17,
-    fontWeight: "700",
-    marginBottom: 6,
-    letterSpacing: 0.3,
-  },
-  stationFrequency: {
-    fontSize: 14,
-    fontWeight: "600",
-    opacity: 0.8,
-  },
+
   playButton: {
     width: 44,
     height: 44,

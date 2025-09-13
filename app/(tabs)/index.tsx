@@ -1,91 +1,98 @@
+import { FavoriteCard } from "@/components/FavoriteCard";
 import { GradientBackground } from "@/components/GradientBackground";
-import { MiniPlayer } from "@/components/MiniPlayer";
-import { StationCard } from "@/components/StationCard";
+import { RecentCard } from "@/components/RecentCard";
+import { TrendingCard } from "@/components/TrendingCard";
+import { Typography } from "@/components/typography";
 import { colors } from "@/constants/colors";
+import { radius } from "@/constants/radius";
+import { spacing } from "@/constants/spacing";
+import { usePlayer } from "@/contexts/PlayerContext";
 import {
   getStationsByCategory,
   mockStations,
   RadioStation,
-} from "@/constants/radioData";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+} from "@/store/radioData";
+import { router } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
+import React from "react";
 import {
-  ChevronRight,
-  Clock,
-  Heart,
-  Music,
-  Radio,
-  TrendingUp
-} from "lucide-react-native";
-import React, { useState } from "react";
-import {
-  Dimensions,
   FlatList,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
 
-const { width: screenWidth } = Dimensions.get('window');
+export default function HomeScreen() { 
+  const {
+    currentStation,
+    isPlaying,
+    playStation,
+    pauseStation,
+    recentStations,
+    favorites,
+    toggleFavorite,
+    isFavorite,
+  } = usePlayer();
 
-type TabType = "recent" | "recommended" | "search" | "top";
+  // Dynamic padding based on mini player visibility
+  const miniPlayerPadding = currentStation ? 80 : 0;
 
-export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
-  const [activeTab, setActiveTab] = useState<TabType>("recent");
-  const [currentStation, setCurrentStation] = useState<RadioStation | null>(
-    mockStations[0]
-  );
-  const [isPlaying, setIsPlaying] = useState(false);
+  // Helper function to get station objects from IDs
+  const getStationsByIds = (stationIds: string[]) => {
+    return stationIds
+      .map((id) => mockStations.find((station) => station.id === id))
+      .filter(Boolean) as RadioStation[];
+  };
 
-  const recentStations = getStationsByCategory("recent");
-  const favoriteStations = getStationsByCategory("favorite");
+  const recentStationsData = getStationsByIds(recentStations);
+  const favoriteStationsData = getStationsByIds(favorites);
   const topStations = getStationsByCategory("top");
-  const discoverStations = getStationsByCategory("discover");
 
-  const tabs: { key: TabType; label: string; icon: any }[] = [
-    { key: "recent", label: "Recent", icon: Clock },
-    { key: "recommended", label: "Recommended", icon: TrendingUp },
-    { key: "search", label: "Search", icon: Radio },
-    { key: "top", label: "Top", icon: Music },
-  ];
+  // If no recent stations, show some sample data for demo - limit to 5 items
+  const displayRecentStations =
+    recentStationsData.length > 0
+      ? recentStationsData.slice(0, 5)
+      : topStations.slice(0, 5);
+  const displayFavoriteStations =
+    favoriteStationsData.length > 0
+      ? favoriteStationsData
+      : topStations.slice(0, 4);
 
   const handleStationPress = (station: RadioStation) => {
-    setCurrentStation(station);
+    // Station press logic
   };
 
   const handlePlayPress = (station: RadioStation) => {
-    setCurrentStation(station);
-    setIsPlaying(!isPlaying);
+    if (currentStation?.id === station.id && isPlaying) {
+      pauseStation();
+    } else {
+      playStation(station);
+    }
   };
 
-  const handleMiniPlayerPress = () => {
-    // Navigate to player screen
+  const handleSeeAllPress = () => {
+    router.push("/(tabs)/explore");
   };
-
-  const handleMiniPlayerPlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const renderStationCard = ({ item }: { item: RadioStation }) => (
-    <StationCard
-      id={item.id}
-      name={item.name}
-      frequency={item.frequency}
-      description={item.description}
-      image={item.image}
-      logo={item.logo}
-      isPlaying={currentStation?.id === item.id && isPlaying}
-      onPress={() => handleStationPress(item)}
-      onPlayPress={() => handlePlayPress(item)}
-      size="medium"
-    />
-  );
 
   const renderFavoriteCard = ({ item }: { item: RadioStation }) => (
-    <StationCard
+    <FavoriteCard
+      id={item.id}
+      name={item.name}
+      frequency={item.frequency}
+      description={item.description}
+      image={item.image}
+      logo={item.logo}
+      isPlaying={currentStation?.id === item.id && isPlaying}
+      isFavorite={isFavorite(item.id)}
+      onPress={() => handleStationPress(item)}
+      onPlayPress={() => handlePlayPress(item)}
+      onFavoritePress={() => toggleFavorite(item.id)}
+    />
+  );
+
+  const renderRecentCard = ({ item }: { item: RadioStation }) => (
+    <RecentCard
       id={item.id}
       name={item.name}
       frequency={item.frequency}
@@ -95,12 +102,11 @@ export default function HomeScreen() {
       isPlaying={currentStation?.id === item.id && isPlaying}
       onPress={() => handleStationPress(item)}
       onPlayPress={() => handlePlayPress(item)}
-      size="small"
     />
   );
 
-  const renderLargeCard = ({ item }: { item: RadioStation }) => (
-    <StationCard
+  const renderTrendingCard = ({ item }: { item: RadioStation }) => (
+    <TrendingCard
       id={item.id}
       name={item.name}
       frequency={item.frequency}
@@ -110,227 +116,141 @@ export default function HomeScreen() {
       isPlaying={currentStation?.id === item.id && isPlaying}
       onPress={() => handleStationPress(item)}
       onPlayPress={() => handlePlayPress(item)}
-      size="large"
     />
   );
 
-  const renderSectionHeader = (title: string, subtitle?: string, showSeeAll = true) => (
-    <View style={styles.sectionHeader}>
-      <View style={styles.sectionTitleContainer}>
-        <Text style={[styles.sectionTitle, { color: currentColors.text }]}>
-          {title}
-        </Text>
-        {subtitle && (
-          <Text style={[styles.sectionSubtitle, { color: currentColors.textSecondary }]}>
-            {subtitle}
-          </Text>
+  const renderSectionHeader = (
+    title: string,
+    subtitleOrShowSeeAll?: string | boolean,
+    showSeeAllOrOnPress?: boolean | (() => void),
+    onSeeAllPress?: () => void
+  ) => {
+    // Handle different parameter patterns
+    let subtitle: string | undefined;
+    let showSeeAll: boolean;
+    let onPress: (() => void) | undefined;
+
+    if (typeof subtitleOrShowSeeAll === 'string') {
+      subtitle = subtitleOrShowSeeAll;
+      showSeeAll = typeof showSeeAllOrOnPress === 'boolean' ? showSeeAllOrOnPress : true;
+      onPress = typeof showSeeAllOrOnPress === 'function' ? showSeeAllOrOnPress : onSeeAllPress;
+    } else {
+      subtitle = undefined;
+      showSeeAll = subtitleOrShowSeeAll ?? true;
+      onPress = typeof showSeeAllOrOnPress === 'function' ? showSeeAllOrOnPress : onSeeAllPress;
+    }
+
+    return (
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleContainer}>
+          <View style={styles.titleWithLine}>
+            <View style={[styles.verticalLine, { backgroundColor: colors.natural.accent }]} />
+            <Typography variant="h5" color="primary" weight="bold">
+              {title}
+            </Typography>
+          </View>
+          {subtitle && (
+            <Typography variant="body2" color="secondary">
+              {subtitle}
+            </Typography>
+          )}
+        </View>
+        {showSeeAll && (
+          <TouchableOpacity
+            style={styles.seeAllButton}
+            onPress={onPress || handleSeeAllPress}
+          >
+            <Typography variant="body2" color="accent" weight="bold">
+              See All
+            </Typography>
+            <ChevronRight size={16} color={colors.natural.accent} />
+          </TouchableOpacity>
         )}
       </View>
-      {showSeeAll && (
-        <TouchableOpacity style={styles.seeAllButton}>
-          <Text style={[styles.seeAllText, { color: currentColors.accent }]}>
-            See All
-          </Text>
-          <ChevronRight size={16} color={currentColors.accent} />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <GradientBackground>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: miniPlayerPadding }]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Text style={[styles.greeting, { color: currentColors.text }]}>
-              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}
-            </Text>
-            <Text style={[styles.userName, { color: currentColors.text }]}>
+            <Typography variant="body" color="primary">
+              Good{" "}
+              {new Date().getHours() < 12
+                ? "Morning"
+                : new Date().getHours() < 18
+                ? "Afternoon"
+                : "Evening"}
+            </Typography>
+            <Typography variant="h5" weight="bold" color="primary">
               Welcome back!
-            </Text>
+            </Typography>
           </View>
           <TouchableOpacity style={styles.profileButton}>
-            <View style={[styles.profileAvatar, { backgroundColor: currentColors.accent }]}>
-              <Text style={styles.profileText}>U</Text>
+            <View style={[styles.profileAvatar]}>
+              <Typography
+                variant="h6"
+                color="white"
+                weight="bold"
+                numberOfLines={1}
+              >
+                U
+              </Typography>
             </View>
           </TouchableOpacity>
-        </View>
-
-        {/* Quick Access Tabs */}
-        <View style={styles.tabContainer}>
-          {tabs.map((tab) => {
-            const IconComponent = tab.icon;
-            return (
-              <TouchableOpacity
-                key={tab.key}
-                style={[
-                  styles.tab,
-                  activeTab === tab.key && {
-                    backgroundColor: currentColors.accent,
-                  },
-                ]}
-                onPress={() => setActiveTab(tab.key)}
-              >
-                <IconComponent 
-                  size={18} 
-                  color={activeTab === tab.key ? "#fff" : currentColors.textSecondary} 
-                />
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color:
-                        activeTab === tab.key
-                          ? "#fff"
-                          : currentColors.textSecondary,
-                    },
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
         </View>
 
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >
-          {/* Featured Section */}
-          {activeTab === "recent" && (
-            <React.Fragment>
-              {renderSectionHeader("Recently Played", "Continue where you left off")}
-              <FlatList
-                data={recentStations.slice(0, 3)}
-                renderItem={renderLargeCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-
-              {renderSectionHeader("Your Favorites", `${favoriteStations.length} stations`, false)}
-              <FlatList
-                data={favoriteStations}
-                renderItem={renderFavoriteCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-
-              {renderSectionHeader("Trending Now", "What's popular right now")}
-              <FlatList
-                data={topStations.slice(0, 4)}
-                renderItem={renderStationCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-            </React.Fragment>
+          {/* Recently Played Section */}
+          {renderSectionHeader(
+            "Recently Played",
+            true,
+            handleSeeAllPress
           )}
-
-          {/* Recommended Tab */}
-          {activeTab === "recommended" && (
-            <React.Fragment>
-              {renderSectionHeader("Made for You", "Personalized recommendations")}
-              <FlatList
-                data={discoverStations}
-                renderItem={renderStationCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-
-              {renderSectionHeader("Popular This Week", "Trending stations")}
-              <FlatList
-                data={topStations}
-                renderItem={renderStationCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-            </React.Fragment>
-          )}
-
-          {/* Search Tab */}
-          {activeTab === "search" && (
-            <React.Fragment>
-              {renderSectionHeader("Browse Categories", "Explore by genre")}
-              <View style={styles.categoryGrid}>
-                <TouchableOpacity style={[styles.categoryCard, { backgroundColor: currentColors.cardBackground }]}>
-                  <Music size={24} color={currentColors.accent} />
-                  <Text style={[styles.categoryText, { color: currentColors.text }]}>Music</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.categoryCard, { backgroundColor: currentColors.cardBackground }]}>
-                  <Radio size={24} color={currentColors.accent} />
-                  <Text style={[styles.categoryText, { color: currentColors.text }]}>Talk</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.categoryCard, { backgroundColor: currentColors.cardBackground }]}>
-                  <TrendingUp size={24} color={currentColors.accent} />
-                  <Text style={[styles.categoryText, { color: currentColors.text }]}>News</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.categoryCard, { backgroundColor: currentColors.cardBackground }]}>
-                  <Heart size={24} color={currentColors.accent} />
-                  <Text style={[styles.categoryText, { color: currentColors.text }]}>Sports</Text>
-                </TouchableOpacity>
-              </View>
-
-              {renderSectionHeader("Quick Search", "Popular searches")}
-              <FlatList
-                data={topStations.slice(0, 6)}
-                renderItem={renderStationCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-            </React.Fragment>
-          )}
-
-          {/* Top Tab */}
-          {activeTab === "top" && (
-            <React.Fragment>
-              {renderSectionHeader("Top Charts", "Most played stations")}
-              <FlatList
-                data={topStations}
-                renderItem={renderStationCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-
-              {renderSectionHeader("Global Hits", "Worldwide favorites")}
-              <FlatList
-                data={discoverStations}
-                renderItem={renderStationCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalList}
-              />
-            </React.Fragment>
-          )}
-        </ScrollView>
-
-        {/* Mini Player */}
-        {currentStation && (
-          <MiniPlayer
-            stationName={currentStation.name}
-            stationDescription={currentStation.description}
-            image={currentStation.image}
-            logo={currentStation.logo}
-            isPlaying={isPlaying}
-            onPlayPause={handleMiniPlayerPlayPause}
-            onPress={handleMiniPlayerPress}
+          <FlatList
+            data={displayRecentStations}
+            renderItem={renderRecentCard}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
           />
-        )}
+
+          {/* Favorites Section */}
+          {renderSectionHeader(
+            "Your Favorites",
+            `${displayFavoriteStations.length} stations`,
+            false
+          )}
+          <FlatList
+            data={displayFavoriteStations}
+            renderItem={renderFavoriteCard}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+
+          {/* Trending Section */}
+          {renderSectionHeader(
+            "Trending Now",
+            true,
+            handleSeeAllPress
+          )}
+          <FlatList
+            data={topStations.slice(0, 4)}
+            renderItem={renderTrendingCard}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </ScrollView>
       </View>
     </GradientBackground>
   );
@@ -339,130 +259,79 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background.main,
     paddingTop: 60,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: 8,
+    paddingHorizontal: spacing.ml,
+    paddingVertical: spacing.xms,
   },
   headerContent: {
     flex: 1,
+    gap: 2,
   },
-  greeting: {
-    fontSize: 16,
-    fontWeight: "500",
-    opacity: 0.8,
-    marginBottom: 4,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
+
   profileButton: {
     padding: 4,
   },
   profileAvatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.full,
     justifyContent: "center",
     alignItems: "center",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 2,
+    backgroundColor: colors.natural.accent,
   },
-  profileText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  tabContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    marginBottom: 24,
-    gap: 8,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 16,
-    gap: 6,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
+
   scrollView: {
     flex: 1,
-    paddingHorizontal: 20,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-    marginTop: 8,
+    marginBottom: 8,
+    marginTop: 16,
+    paddingHorizontal: spacing.ml,
   },
   sectionTitleContainer: {
     flex: 1,
   },
+  titleWithLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  verticalLine: {
+    width: 3,
+    height: 20,
+    borderRadius: 1.5,
+  },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: "700",
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    fontWeight: "500",
     opacity: 0.7,
   },
   seeAllButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
+    gap: 2,
+    paddingHorizontal: spacing.xms,
     paddingVertical: 4,
   },
   seeAllText: {
-    fontSize: 14,
-    fontWeight: "600",
+    // Typography handles font styling
   },
   horizontalList: {
     paddingRight: 20,
-  },
-  categoryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-    marginBottom: 24,
-  },
-  categoryCard: {
-    width: (screenWidth - 60) / 2,
-    height: 80,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
 });
