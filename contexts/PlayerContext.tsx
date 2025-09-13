@@ -1,7 +1,6 @@
 import { mockStations, RadioStation } from '@/constants/radioData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
-import * as Notifications from 'expo-notifications';
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 interface PlayerContextType {
@@ -69,6 +68,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   
   const soundRef = useRef<Audio.Sound | null>(null);
 
+  const stopAllAudio = useCallback(async (clearStation = false) => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      setIsPlaying(false);
+      if (clearStation) {
+        setCurrentStation(null);
+      }
+      await hideMediaNotification();
+    } catch (error) {
+      console.error('Error stopping all audio:', error);
+    }
+  }, []);
+
   // Initialize audio and load data on mount
   useEffect(() => {
     initializeAudio();
@@ -77,11 +93,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     
     return () => {
       // Cleanup audio on unmount
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
-      }
+      stopAllAudio(true);
     };
-  }, []);
+  }, [stopAllAudio]);
 
   // Update volume when it changes
   useEffect(() => {
@@ -143,49 +157,38 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         shouldDuckAndroid: true,
         playThroughEarpieceAndroid: false,
       });
+      console.log('Audio initialized successfully');
     } catch (error) {
       console.error('Error initializing audio:', error);
+      // Continue without throwing - audio might still work
     }
   };
 
   const setupMediaNotifications = async () => {
+    // Notifications disabled for Expo Go compatibility
+    // This function is kept for future development builds
     try {
-      await Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowAlert: true,
-          shouldPlaySound: false,
-          shouldSetBadge: false,
-          shouldShowBanner: true,
-          shouldShowList: true,
-        }),
-      });
+      console.log('Media notifications setup skipped for Expo Go compatibility');
     } catch (error) {
       console.error('Error setting up notifications:', error);
     }
   };
 
   const showMediaNotification = async (station: RadioStation) => {
+    // Notifications disabled for Expo Go compatibility
+    // This function is kept for future development builds
     try {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: station.name,
-          body: station.description || 'Now Playing',
-          data: { 
-            stationId: station.id,
-            action: 'media_controls'
-          },
-          categoryIdentifier: 'media_controls',
-        },
-        trigger: null,
-      });
+      console.log(`Media notification for ${station.name} skipped for Expo Go compatibility`);
     } catch (error) {
       console.error('Error showing media notification:', error);
     }
   };
 
   const hideMediaNotification = async () => {
+    // Notifications disabled for Expo Go compatibility
+    // This function is kept for future development builds
     try {
-      await Notifications.dismissAllNotificationsAsync();
+      console.log('Media notification hide skipped for Expo Go compatibility');
     } catch (error) {
       console.error('Error hiding media notification:', error);
     }
@@ -197,17 +200,31 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setLoadingProgress(0);
       setError(null);
       
+      // Set current station immediately to show mini player
+      setCurrentStation(station);
+      setCurrentTrack('Now Playing');
+      addToRecentStations(station.id);
+      
       // Stop current audio if playing
       if (soundRef.current) {
-        await soundRef.current.unloadAsync();
+        try {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+        } catch (stopError) {
+          console.log('Error stopping previous audio:', stopError);
+        }
         soundRef.current = null;
       }
+      
+      // Reset playing state immediately to prevent UI confusion
+      setIsPlaying(false);
 
       // Check if station has URL
       if (!station.url) {
         setError('No streaming URL available for this station');
         setIsLoading(false);
         setLoadingProgress(0);
+        setCurrentStation(null); // Clear station if no URL
         return;
       }
 
@@ -229,6 +246,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           shouldPlay: true,
           volume: volume,
           isLooping: false,
+          progressUpdateIntervalMillis: 1000,
+        },
+        (status) => {
+          if (status.isLoaded) {
+            console.log('Audio loaded successfully');
+          } else if (status.error) {
+            console.error('Audio loading error:', status.error);
+            setError('Failed to load audio stream');
+            setIsLoading(false);
+            setIsPlaying(false);
+          }
         }
       );
 
@@ -236,10 +264,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setLoadingProgress(1);
 
       soundRef.current = sound;
-      setCurrentStation(station);
       setIsPlaying(true);
-      setCurrentTrack('Now Playing');
-      addToRecentStations(station.id);
       
       // Setup media notifications
       await setupMediaNotifications();
@@ -253,6 +278,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       setLoadingProgress(0);
       setIsPlaying(false);
+      setCurrentStation(null); // Clear station on error
     }
   };
 
@@ -265,6 +291,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error pausing station:', error);
+      // If pause fails, try to stop completely
+      if (soundRef.current) {
+        try {
+          await soundRef.current.stopAsync();
+          setIsPlaying(false);
+        } catch (stopError) {
+          console.error('Error stopping station:', stopError);
+        }
+      }
     }
   }, []);
 
@@ -307,7 +342,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return favorites.includes(stationId);
   };
 
-  const playPreviousStation = () => {
+  const playPreviousStation = async () => {
     if (!currentStation) return;
 
     // Always use all stations for navigation to ensure all stations are accessible
@@ -318,23 +353,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const previousStationId = allStationIds[currentIndex - 1];
       const previousStation = mockStations.find(s => s.id === previousStationId);
       if (previousStation) {
-        playStation(previousStation);
+        await playStation(previousStation);
       }
     } else {
       // If at the beginning, go to the last station
       const lastStationId = allStationIds[allStationIds.length - 1];
       const lastStation = mockStations.find(s => s.id === lastStationId);
       if (lastStation) {
-        playStation(lastStation);
+        await playStation(lastStation);
       }
     }
   };
 
-  const playNextStation = () => {
+  const playNextStation = async () => {
     if (!currentStation) return;
 
     if (shuffleMode) {
-      playRandomStation();
+      await playRandomStation();
       return;
     }
 
@@ -346,14 +381,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const nextStationId = allStationIds[currentIndex + 1];
       const nextStation = mockStations.find(s => s.id === nextStationId);
       if (nextStation) {
-        playStation(nextStation);
+        await playStation(nextStation);
       }
     } else {
       // If at the end, go to the first station
       const firstStationId = allStationIds[0];
       const firstStation = mockStations.find(s => s.id === firstStationId);
       if (firstStation) {
-        playStation(firstStation);
+        await playStation(firstStation);
       }
     }
   };
@@ -362,12 +397,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setShuffleMode(!shuffleMode);
   };
 
-  const playRandomStation = () => {
+  const playRandomStation = async () => {
     const availableStations = mockStations.filter(station => station.id !== currentStation?.id);
     if (availableStations.length > 0) {
       const randomIndex = Math.floor(Math.random() * availableStations.length);
       const randomStation = availableStations[randomIndex];
-      playStation(randomStation);
+      await playStation(randomStation);
     }
   };
 
