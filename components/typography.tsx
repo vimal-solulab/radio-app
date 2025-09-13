@@ -1,24 +1,25 @@
-import { colors } from '@/constants/colors';
-import { typography } from '@/constants/typography';
-import React from 'react';
-import { StyleSheet, Text, TextStyle } from 'react-native';
+import { colors } from "@/constants/colors";
+import { typography } from "@/constants/typography";
+import React from "react";
+import { StyleSheet, Text, TextStyle } from "react-native";
 interface TypographyProps {
   children: React.ReactNode;
   variant?: keyof typeof typography.variants;
   color?:
-    | 'primary'
-    | 'secondary'
-    | 'tertiary'
-    | 'inverse'
-    | 'gold'
-    | 'navy'
-    | 'error'
-    | 'success'
-    | 'warning'
-    | 'info'
-    | 'muted'
-    | 'white';
-  align?: 'left' | 'center' | 'right' | 'justify';
+    | "primary"
+    | "secondary"
+    | "tertiary"
+    | "accent"
+    | "inverse"
+    | "gold"
+    | "navy"
+    | "error"
+    | "success"
+    | "warning"
+    | "info"
+    | "muted"
+    | "white";
+  align?: "left" | "center" | "right" | "justify";
   weight?: keyof typeof typography.fontWeight;
   style?: TextStyle;
   numberOfLines?: number;
@@ -26,50 +27,55 @@ interface TypographyProps {
 }
 export const Typography: React.FC<TypographyProps> = ({
   children,
-  variant = 'body',
-  color = 'primary',
-  align = 'left',
+  variant = "body",
+  color = "primary",
+  align = "left",
   weight,
   style,
   numberOfLines,
   onPress,
 }) => {
   const getVariantStyle = (): TextStyle => {
-    const variantConfig = typography.variants[variant] || typography.variants.body;
+    const variantConfig =
+      typography.variants[variant] || typography.variants.body;
     return {
       fontSize: variantConfig.fontSize,
       fontWeight: weight || variantConfig.fontWeight,
       lineHeight: variantConfig.lineHeight * variantConfig.fontSize,
       letterSpacing: variantConfig.letterSpacing,
-      ...(variantConfig.textTransform && { textTransform: variantConfig.textTransform }),
+      ...((variantConfig as any).textTransform && {
+        textTransform: (variantConfig as any).textTransform,
+      }),
     };
   };
   const getColorStyle = (): TextStyle => {
     switch (color) {
-      case 'primary':
+      case "primary":
         return { color: colors.text.primary };
-      case 'secondary':
+      case "accent":
+        return { color: colors.natural.accent };
+      case "secondary":
         return { color: colors.text.secondary };
-      case 'tertiary':
+      case "tertiary":
         return { color: colors.text.tertiary };
-      case 'inverse':
+      case "inverse":
         return { color: colors.text.inverse };
-      case 'gold':
+      case "gold":
         return { color: colors.text.gold };
-      case 'white':
+      case "white":
         return { color: colors.neutral.white };
-      case 'navy':
+      case "navy":
         return { color: colors.text.navy };
-      case 'muted':
+      case "muted":
         return { color: colors.text.muted };
-      case 'error':
+      case "error":
         return { color: colors.status.error };
-      case 'success':
+      case "success":
         return { color: colors.status.success };
-      case 'warning':
+      case "warning":
         return { color: colors.status.warning };
-      case 'info':
-        return { color: colors.status.info };
+      case "info":
+        return { color: colors.status.pending };
       default:
         return { color: colors.text.primary };
     }
@@ -85,7 +91,11 @@ export const Typography: React.FC<TypographyProps> = ({
     ...style,
   };
   return (
-    <Text style={combinedStyle} numberOfLines={numberOfLines} onPress={onPress}>
+    <Text
+      style={combinedStyle}
+      numberOfLines={numberOfLines}
+      onPress={onPress}
+    >
       {children}
     </Text>
   );

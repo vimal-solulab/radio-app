@@ -1,7 +1,6 @@
 import { colors } from "@/constants/colors";
 import { radius } from "@/constants/radius";
 import { spacing } from "@/constants/spacing";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Pause, Play } from "lucide-react-native";
 import React, { useEffect, useRef } from "react";
 import {
@@ -38,8 +37,7 @@ export function MiniPlayer({
   isLoading = false,
   loadingProgress = 0,
 }: MiniPlayerProps) {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
+ 
 
   const slideAnimation = useRef(new Animated.Value(0)).current;
 
@@ -79,8 +77,8 @@ export function MiniPlayer({
             <View
               style={[
                 styles.placeholderLogo,
-                { backgroundColor: currentColors.accent },
-              ]}
+                { backgroundColor: colors.natural.accent },
+              ]}  
             >
               <Typography variant="body" color="white">
                 {stationName.charAt(0)}

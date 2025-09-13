@@ -4,18 +4,16 @@ import { RecentCard } from "@/components/RecentCard";
 import { TrendingCard } from "@/components/TrendingCard";
 import { Typography } from "@/components/typography";
 import { colors } from "@/constants/colors";
+import { radius } from "@/constants/radius";
+import { spacing } from "@/constants/spacing";
+import { usePlayer } from "@/contexts/PlayerContext";
 import {
   getStationsByCategory,
   mockStations,
-  RadioStation
-} from "@/constants/radioData";
-import { spacing } from "@/constants/spacing";
-import { usePlayer } from "@/contexts/PlayerContext";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+  RadioStation,
+} from "@/store/radioData";
 import { router } from "expo-router";
-import {
-  ChevronRight
-} from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import React from "react";
 import {
   FlatList,
@@ -25,18 +23,26 @@ import {
   View,
 } from "react-native";
 
+export default function HomeScreen() { 
+  const {
+    currentStation,
+    isPlaying,
+    playStation,
+    pauseStation,
+    recentStations,
+    favorites,
+    toggleFavorite,
+    isFavorite,
+  } = usePlayer();
 
-export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
-  const { currentStation, isPlaying, playStation, pauseStation, recentStations, favorites, toggleFavorite, isFavorite } = usePlayer();
-  
   // Dynamic padding based on mini player visibility
   const miniPlayerPadding = currentStation ? 80 : 0;
 
   // Helper function to get station objects from IDs
   const getStationsByIds = (stationIds: string[]) => {
-    return stationIds.map(id => mockStations.find(station => station.id === id)).filter(Boolean) as RadioStation[];
+    return stationIds
+      .map((id) => mockStations.find((station) => station.id === id))
+      .filter(Boolean) as RadioStation[];
   };
 
   const recentStationsData = getStationsByIds(recentStations);
@@ -44,9 +50,14 @@ export default function HomeScreen() {
   const topStations = getStationsByCategory("top");
 
   // If no recent stations, show some sample data for demo - limit to 5 items
-  const displayRecentStations = recentStationsData.length > 0 ? recentStationsData.slice(0, 5) : topStations.slice(0, 5);
-  const displayFavoriteStations = favoriteStationsData.length > 0 ? favoriteStationsData : topStations.slice(0, 4);
-
+  const displayRecentStations =
+    recentStationsData.length > 0
+      ? recentStationsData.slice(0, 5)
+      : topStations.slice(0, 5);
+  const displayFavoriteStations =
+    favoriteStationsData.length > 0
+      ? favoriteStationsData
+      : topStations.slice(0, 4);
 
   const handleStationPress = (station: RadioStation) => {
     // Station press logic
@@ -63,7 +74,6 @@ export default function HomeScreen() {
   const handleSeeAllPress = () => {
     router.push("/(tabs)/explore");
   };
-
 
   const renderFavoriteCard = ({ item }: { item: RadioStation }) => (
     <FavoriteCard
@@ -109,29 +119,56 @@ export default function HomeScreen() {
     />
   );
 
+  const renderSectionHeader = (
+    title: string,
+    subtitleOrShowSeeAll?: string | boolean,
+    showSeeAllOrOnPress?: boolean | (() => void),
+    onSeeAllPress?: () => void
+  ) => {
+    // Handle different parameter patterns
+    let subtitle: string | undefined;
+    let showSeeAll: boolean;
+    let onPress: (() => void) | undefined;
 
-  const renderSectionHeader = (title: string, subtitle?: string, showSeeAll = true, onSeeAllPress?: () => void) => (
-    <View style={styles.sectionHeader}>
-      <View style={styles.sectionTitleContainer}>
-        <Typography variant="h3" color="primary" style={styles.sectionTitle}>
-          {title}
-        </Typography>
-        {subtitle && (
-          <Typography variant="subtitle2" color="secondary" style={styles.sectionSubtitle}>
-            {subtitle}
-          </Typography>
+    if (typeof subtitleOrShowSeeAll === 'string') {
+      subtitle = subtitleOrShowSeeAll;
+      showSeeAll = typeof showSeeAllOrOnPress === 'boolean' ? showSeeAllOrOnPress : true;
+      onPress = typeof showSeeAllOrOnPress === 'function' ? showSeeAllOrOnPress : onSeeAllPress;
+    } else {
+      subtitle = undefined;
+      showSeeAll = subtitleOrShowSeeAll ?? true;
+      onPress = typeof showSeeAllOrOnPress === 'function' ? showSeeAllOrOnPress : onSeeAllPress;
+    }
+
+    return (
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleContainer}>
+          <View style={styles.titleWithLine}>
+            <View style={[styles.verticalLine, { backgroundColor: colors.natural.accent }]} />
+            <Typography variant="h5" color="primary" weight="bold">
+              {title}
+            </Typography>
+          </View>
+          {subtitle && (
+            <Typography variant="body2" color="secondary">
+              {subtitle}
+            </Typography>
+          )}
+        </View>
+        {showSeeAll && (
+          <TouchableOpacity
+            style={styles.seeAllButton}
+            onPress={onPress || handleSeeAllPress}
+          >
+            <Typography variant="body2" color="accent" weight="bold">
+              See All
+            </Typography>
+            <ChevronRight size={16} color={colors.natural.accent} />
+          </TouchableOpacity>
         )}
       </View>
-      {showSeeAll && (
-        <TouchableOpacity style={styles.seeAllButton} onPress={onSeeAllPress || handleSeeAllPress}>
-          <Typography variant="subtitle2" color="primary" style={styles.seeAllText}>
-            See All
-          </Typography>
-          <ChevronRight size={16} color={currentColors.accent} />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <GradientBackground>
@@ -139,27 +176,42 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Typography variant="subtitle2" color="primary" style={styles.greeting}>
-              Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}
+            <Typography variant="body" color="primary">
+              Good{" "}
+              {new Date().getHours() < 12
+                ? "Morning"
+                : new Date().getHours() < 18
+                ? "Afternoon"
+                : "Evening"}
             </Typography>
-            <Typography variant="h4" color="primary" style={styles.userName}>
+            <Typography variant="h5" weight="bold" color="primary">
               Welcome back!
             </Typography>
           </View>
           <TouchableOpacity style={styles.profileButton}>
-            <View style={[styles.profileAvatar, { backgroundColor: currentColors.accent }]}>
-              <Typography variant="h6" color="white" style={styles.profileText}>U</Typography>
+            <View style={[styles.profileAvatar]}>
+              <Typography
+                variant="h6"
+                color="white"
+                weight="bold"
+                numberOfLines={1}
+              >
+                U
+              </Typography>
             </View>
           </TouchableOpacity>
         </View>
-
 
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >
           {/* Recently Played Section */}
-          {renderSectionHeader("Recently Played", "Continue where you left off", true, handleSeeAllPress)}
+          {renderSectionHeader(
+            "Recently Played",
+            true,
+            handleSeeAllPress
+          )}
           <FlatList
             data={displayRecentStations}
             renderItem={renderRecentCard}
@@ -170,7 +222,11 @@ export default function HomeScreen() {
           />
 
           {/* Favorites Section */}
-          {renderSectionHeader("Your Favorites", `${displayFavoriteStations.length} stations`, false)}
+          {renderSectionHeader(
+            "Your Favorites",
+            `${displayFavoriteStations.length} stations`,
+            false
+          )}
           <FlatList
             data={displayFavoriteStations}
             renderItem={renderFavoriteCard}
@@ -181,7 +237,11 @@ export default function HomeScreen() {
           />
 
           {/* Trending Section */}
-          {renderSectionHeader("Trending Now", "What's popular right now", true, handleSeeAllPress)}
+          {renderSectionHeader(
+            "Trending Now",
+            true,
+            handleSeeAllPress
+          )}
           <FlatList
             data={topStations.slice(0, 4)}
             renderItem={renderTrendingCard}
@@ -191,7 +251,6 @@ export default function HomeScreen() {
             contentContainerStyle={styles.horizontalList}
           />
         </ScrollView>
-
       </View>
     </GradientBackground>
   );
@@ -207,37 +266,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginBottom: 8,
+    paddingHorizontal: spacing.ml,
+    paddingVertical: spacing.xms,
   },
   headerContent: {
     flex: 1,
+    gap: 2,
   },
-  greeting: {
-    opacity: 0.8,
-    marginBottom: 4,
-  },
-  userName: {
-    letterSpacing: 0.5,
-  },
+
   profileButton: {
     padding: 4,
   },
   profileAvatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.full,
     justifyContent: "center",
     alignItems: "center",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 2,
+    backgroundColor: colors.natural.accent,
   },
-  profileText: {
-    // Typography handles color and font styling
-  },
+
   scrollView: {
     flex: 1,
   },
@@ -252,6 +304,16 @@ const styles = StyleSheet.create({
   sectionTitleContainer: {
     flex: 1,
   },
+  titleWithLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  verticalLine: {
+    width: 3,
+    height: 20,
+    borderRadius: 1.5,
+  },
   sectionTitle: {
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -262,8 +324,8 @@ const styles = StyleSheet.create({
   seeAllButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
+    gap: 2,
+    paddingHorizontal: spacing.xms,
     paddingVertical: 4,
   },
   seeAllText: {

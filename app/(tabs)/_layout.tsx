@@ -2,18 +2,20 @@ import { MiniPlayer } from "@/components/MiniPlayer";
 import { NavTab } from "@/components/navtab";
 import { colors } from "@/constants/colors";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Tabs, router } from "expo-router";
 import { Home, Search, Settings } from "lucide-react-native";
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const { currentStation, isPlaying, pauseStation, resumeStation, isLoading, loadingProgress } =
-    usePlayer();
-  const insets = useSafeAreaInsets();
+  const {
+    currentStation,
+    isPlaying,
+    pauseStation,
+    resumeStation,
+    isLoading,
+    loadingProgress,
+  } = usePlayer();
 
   const handleMiniPlayerPress = () => {
     router.push("/full-player");
@@ -33,14 +35,12 @@ export default function TabLayout() {
       <View style={styles.content}>
         <Tabs
           screenOptions={{
-            tabBarActiveTintColor: colors[colorScheme ?? "light"].tint,
+            tabBarActiveTintColor: colors.natural.accent,
             headerShown: false,
             tabBarButton: NavTab,
-            
+            tabBarInactiveTintColor: colors.text.secondary,
             tabBarStyle: {
-              backgroundColor: colors[colorScheme ?? "light"].background,
-              borderTopColor: "rgba(255, 255, 255, 0.1)",
-              paddingBottom: insets.bottom,
+              backgroundColor: colors.natural.cardBackground,
               height: 80,
             },
           }}
@@ -69,7 +69,7 @@ export default function TabLayout() {
           />
         </Tabs>
       </View>
-      
+
       {/* Mini Player - Above Bottom Navigation */}
       {currentStation && (
         <MiniPlayer

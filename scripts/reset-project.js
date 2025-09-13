@@ -27,7 +27,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <Typography>Edit app/index.tsx to edit this screen.</Typography>
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import { mockStations, RadioStation } from '@/constants/radioData';
+import { mockStations, RadioStation } from '@/store/radioData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';

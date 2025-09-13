@@ -3,7 +3,6 @@ import { Typography } from "@/components/typography";
 import { colors } from "@/constants/colors";
 import { radius } from "@/constants/radius";
 import { spacing } from "@/constants/spacing";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { router } from "expo-router";
 import {
   ArrowLeft,
@@ -18,8 +17,7 @@ import React, { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
+   
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -77,7 +75,7 @@ export default function SettingsScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <ArrowLeft size={24} color={currentColors.text} />
+            <ArrowLeft size={24} color={colors.natural.accent} />
           </TouchableOpacity>
           <Typography variant="h4" color="primary" weight="bold">
             Settings
@@ -97,7 +95,7 @@ export default function SettingsScreen() {
                 <View
                   style={[
                     styles.iconContainer,
-                    { backgroundColor: currentColors.accent },
+                    { backgroundColor: colors.natural.accent },
                   ]}
                 >
                   <item.icon size={20} color="#fff" />
@@ -118,7 +116,7 @@ export default function SettingsScreen() {
                     styles.toggle,
                     {
                       backgroundColor: item.value
-                        ? currentColors.accent
+                        ? colors.natural.accent
                         : colors.background.main,
                     },
                   ]}
@@ -138,7 +136,7 @@ export default function SettingsScreen() {
               ) : (
                 <ArrowLeft
                   size={20}
-                  color={currentColors.text}
+                  color={colors.text.primary}
                   style={{ transform: [{ rotate: "180deg" }] }}
                 />
               )}
@@ -167,7 +165,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: radius.full,
-    backgroundColor: colors.background.secondary,
+    backgroundColor: colors.border.light,
     justifyContent: "center",
     alignItems: "center",
   },

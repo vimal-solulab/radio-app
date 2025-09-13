@@ -1,5 +1,4 @@
 import { colors } from "@/constants/colors";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -8,12 +7,11 @@ interface GradientBackgroundProps {
 }
 
 export function GradientBackground({ children }: GradientBackgroundProps) {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
+ 
 
   return (
     <View
-      style={[styles.container, { backgroundColor: currentColors.background }]}
+      style={[styles.container, { backgroundColor: colors.background.main }]}
     >
       {children}
     </View>

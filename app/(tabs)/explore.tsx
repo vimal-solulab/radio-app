@@ -1,16 +1,15 @@
 import { GradientBackground } from "@/components/GradientBackground";
 import { Typography } from "@/components/typography";
 import { colors } from "@/constants/colors";
-import {
-  getStationsByCategory,
-  RadioStation,
-  searchStations,
-} from "@/constants/radioData";
 import { radius } from "@/constants/radius";
 import { spacing } from "@/constants/spacing";
 import { typography } from "@/constants/typography";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {
+  getStationsByCategory,
+  RadioStation,
+  searchStations,
+} from "@/store/radioData";
 import { Pause, Play, Search } from "lucide-react-native";
 import React, { useRef, useState } from "react";
 import {
@@ -25,8 +24,7 @@ import {
 type SearchTabType = "top" | "discover" | "top40";
 
 export default function SearchScreen() {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
+  
   const { currentStation, isPlaying, playStation, pauseStation, isLoading } = usePlayer();
   const [activeTab, setActiveTab] = useState<SearchTabType>("top");
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,11 +130,11 @@ export default function SearchScreen() {
             {
               backgroundColor:
                 currentStation?.id === item.id && isPlaying
-                  ? currentColors.accent
+                  ? colors.natural.accent
                   : "rgba(63, 43, 150, 0.15)",
               shadowColor:
                 currentStation?.id === item.id && isPlaying
-                  ? currentColors.accent
+                  ? colors.natural.accent
                   : "rgba(0, 0, 0, 0.1)",
             },
           ]}
@@ -177,17 +175,17 @@ export default function SearchScreen() {
           <View
             style={[
               styles.searchBar,
-              { backgroundColor: currentColors.cardBackground },
+              { backgroundColor: colors.natural.cardBackground },
             ]}
           >
             <Search
               size={20}
-              color={currentColors.textSecondary}
+              color={colors.text.secondary}
               style={styles.searchIcon}
             />
             <TextInput
               style={styles.searchInput}
-              placeholderTextColor={currentColors.textSecondary}
+              placeholderTextColor={colors.text.secondary}
               placeholder="Search station"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -216,7 +214,7 @@ export default function SearchScreen() {
                 style={[
                   styles.tab,
                   activeTab === tab.key && {
-                    backgroundColor: currentColors.accent,
+                    backgroundColor: colors.natural.accent,
                   },
                 ]}
                 onPress={() => setActiveTab(tab.key)}

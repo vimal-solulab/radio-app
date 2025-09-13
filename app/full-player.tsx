@@ -5,7 +5,6 @@ import { colors } from "@/constants/colors";
 import { radius } from "@/constants/radius";
 import { spacing } from "@/constants/spacing";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { router } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import {
@@ -17,8 +16,6 @@ import {
 } from "react-native";
 
 export default function FullPlayerScreen() {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
   const {
     currentStation,
     isPlaying,
@@ -90,101 +87,87 @@ export default function FullPlayerScreen() {
   };
 
   return (
-    <GradientBackground>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleMinimize}>
-            <ArrowLeft size={24} color={currentColors.text} />
-          </TouchableOpacity>
-          <Typography variant="h4" color="primary" weight="bold">
-            Now Playing
-          </Typography>
-          <View style={styles.placeholder} />
-        </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleMinimize}>
+          <ArrowLeft size={24} color={colors.natural.accent} />
+        </TouchableOpacity>
+        <Typography variant="h4" color="primary" weight="bold">
+          Now Playing
+        </Typography>
+        <View style={styles.placeholder} />
+      </View>
 
-        {/* Station Logo */}
-        <View style={styles.logoContainer}>
-          <View style={styles.stationLogo}>
-            {currentStation.image ? (
-              <Image
-                source={{ uri: currentStation.image }}
-                style={styles.stationImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <Typography variant="h4" color="white" weight="bold">
-                {currentStation.name.charAt(0)}
-              </Typography>
-            )}
-          </View>
+      {/* Station Logo */}
+      <View style={styles.logoContainer}>
+        <View style={styles.stationLogo}>
+          {currentStation.image ? (
+            <Image
+              source={{ uri: currentStation.image }}
+              style={styles.stationImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Typography variant="h4" color="primary" weight="bold">
+              {currentStation.name.charAt(0)}
+            </Typography>
+          )}
         </View>
+      </View>
 
-        {/* Station Info */}
-        <View style={styles.stationInfo}>
-          <Typography variant="h4" color="white" weight="bold">
-            {currentStation.name}
+      {/* Station Info */}
+      <View style={styles.stationInfo}>
+        <Typography variant="h4" color="primary" weight="bold">
+          {currentStation.name}
+        </Typography>
+        <Typography
+          variant="h5"
+          weight="bold"
+          color="primary"
+          numberOfLines={1}
+        >
+          {currentStation.description}
+        </Typography>
+        <View style={styles.stationMeta}>
+          <Typography variant="body" color="secondary" style={styles.metaText}>
+            {currentStation.frequency}
           </Typography>
-          <Typography
-            variant="h5"
-            weight="bold"
-            color="primary"
-            numberOfLines={1}
-          >
-            {currentStation.description}
+          <Typography variant="body" color="secondary" style={styles.metaText}>
+            •
           </Typography>
-          <View style={styles.stationMeta}>
-            <Typography
-              variant="body"
-              color="secondary"
-              style={styles.metaText}
-            >
-              {currentStation.frequency}
-            </Typography>
-            <Typography
-              variant="body"
-              color="secondary"
-              style={styles.metaText}
-            >
-              •
-            </Typography>
-            <Typography
-              variant="body"
-              color="secondary"
-              style={styles.metaText}
-            >
-              {currentStation.country || "India"}
-            </Typography>
-          </View>
+          <Typography variant="body" color="secondary" style={styles.metaText}>
+            {currentStation.country || "India"}
+          </Typography>
         </View>
+      </View>
 
-        {/* Player Controls */}
-        <PlayerControls
-          isPlaying={isPlaying}
-          onPlayPause={handlePlayPause}
-          onPrevious={handlePrevious}
-          onNext={handleNext}
-          volume={volume}
-          onVolumeChange={handleVolumeChange}
-          onFavorite={handleFavorite}
-          onSettings={handleSettings}
-          isFavorite={
-            currentStation ? isStationFavorite(currentStation.id) : false
-          }
-          bass={bass}
-          treble={treble}
-          balance={balance}
-          audioEffects={audioEffects}
-          onBassChange={setBass}
-          onTrebleChange={setTreble}
-          onBalanceChange={setBalance}
-          onToggleAudioEffect={toggleAudioEffect}
-          isLoading={isLoading}
-          loadingProgress={loadingProgress}
-          error={error}
-        />
-      </ScrollView>
-    </GradientBackground>
+      {/* Player Controls */}
+      <PlayerControls
+        isPlaying={isPlaying}
+        onPlayPause={handlePlayPause}
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+        volume={volume}
+        onVolumeChange={handleVolumeChange}
+        onFavorite={handleFavorite}
+        onSettings={handleSettings}
+        isFavorite={
+          currentStation ? isStationFavorite(currentStation.id) : false
+        }
+        bass={bass}
+        treble={treble}
+        balance={balance}
+        audioEffects={audioEffects}
+        onBassChange={setBass}
+        onTrebleChange={setTreble}
+        onBalanceChange={setBalance}
+        onToggleAudioEffect={toggleAudioEffect}
+        isLoading={isLoading}
+        loadingProgress={loadingProgress}
+        error={error}
+      />
+    </ScrollView>
   );
 }
 
@@ -213,7 +196,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: colors.border.light,
     justifyContent: "center",
     alignItems: "center",
   },

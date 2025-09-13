@@ -1,5 +1,4 @@
 import { colors } from "@/constants/colors";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 // @ts-ignore
 import { radius } from "@/constants/radius";
 import { spacing } from "@/constants/spacing";
@@ -74,8 +73,7 @@ export function PlayerControls({
   error = null,
   loadingProgress = 0,
 }: PlayerControlsProps) {
-  const colorScheme = useColorScheme();
-  const currentColors = colors[colorScheme ?? "light"];
+ 
   const [showSoundModal, setShowSoundModal] = useState(false);
 
   return (
@@ -89,7 +87,7 @@ export function PlayerControls({
           ]}
           onPress={onPrevious}
         >
-          <SkipBack size={24} color={currentColors.text} />
+          <SkipBack size={24} color={colors.natural.accent} />
         </TouchableOpacity>
 
         <View style={styles.playButtonContainer}>
@@ -122,7 +120,7 @@ export function PlayerControls({
           ]}
           onPress={onNext}
         >
-          <SkipForward size={24} color={currentColors.text} />
+          <SkipForward size={24} color={colors.natural.accent} />
         </TouchableOpacity>
       </View>
 
@@ -149,7 +147,7 @@ export function PlayerControls({
           <VolumeX
             size={20}
             color={
-              volume === 0 ? currentColors.accent : currentColors.textSecondary
+              volume === 0 ? colors.natural.accent : colors.text.secondary
             }
           />
         </TouchableOpacity>
@@ -159,7 +157,7 @@ export function PlayerControls({
             value={volume}
             onValueChange={onVolumeChange}
             label={null}
-            color={currentColors.accent}
+            color={colors.natural.accent}
             width={Math.min(Dimensions.get("window").width - 160, 230)}
           />
         </View>
@@ -169,16 +167,16 @@ export function PlayerControls({
           onPress={() => onVolumeChange(1)}
         >
           {volume === 0 ? (
-            <VolumeX size={20} color={currentColors.textSecondary} />
+            <VolumeX size={20} color={colors.text.secondary} />
           ) : volume < 0.5 ? (
-            <Volume1 size={20} color={currentColors.textSecondary} />
+            <Volume1 size={20} color={colors.text.secondary} />
           ) : (
             <Volume2
               size={20}
               color={
                 volume === 1
-                  ? currentColors.accent
-                  : currentColors.textSecondary
+                  ? colors.natural.accent
+                  : colors.text.secondary
               }
             />
           )}
@@ -194,7 +192,7 @@ export function PlayerControls({
           ]}
           onPress={() => setShowSoundModal(true)}
         >
-          <Sliders size={20} color={currentColors.textSecondary} />
+          <Sliders size={20} color={colors.text.secondary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -202,7 +200,7 @@ export function PlayerControls({
             styles.bottomButton,
             {
               backgroundColor: isFavorite
-                ? `${currentColors.accent}20`
+                ? `${colors.natural.accent}20`
                 : "rgba(255, 255, 255, 0.1)",
             },
           ]}
@@ -211,9 +209,9 @@ export function PlayerControls({
           <Heart
             size={24}
             color={
-              isFavorite ? currentColors.accent : currentColors.textSecondary
+              isFavorite ? colors.natural.accent : colors.text.secondary
             }
-            fill={isFavorite ? currentColors.accent : "transparent"}
+            fill={isFavorite ? colors.natural.accent : "transparent"}
           />
         </TouchableOpacity>
 
@@ -224,7 +222,7 @@ export function PlayerControls({
           ]}
           onPress={onSettings}
         >
-          <Settings size={24} color={currentColors.textSecondary} />
+          <Settings size={24} color={colors.text.secondary} />
         </TouchableOpacity>
       </View>
 
@@ -252,7 +250,7 @@ export function PlayerControls({
                 value={bass}
                 onValueChange={(value) => onBassChange?.(value)}
                 label={`Bass: ${Math.round((bass - 0.5) * 100)}`}
-                color={currentColors.accent}
+                color={colors.natural.accent}
               />
 
               {/* Treble Control */}
@@ -260,7 +258,7 @@ export function PlayerControls({
                 value={treble}
                 onValueChange={(value) => onTrebleChange?.(value)}
                 label={`Treble: ${Math.round((treble - 0.5) * 100)}`}
-                color={currentColors.accent}
+                color={colors.natural.accent}
               />
 
               {/* Balance Control */}
@@ -270,7 +268,7 @@ export function PlayerControls({
                 label={`Balance: ${
                   balance < 0.5 ? "L" : balance > 0.5 ? "R" : "C"
                 }`}
-                color={currentColors.accent}
+                  color={colors.natural.accent}
               />
             </View>
             {/* Audio Effects */}
@@ -289,7 +287,7 @@ export function PlayerControls({
                     styles.effectButton,
                     {
                       backgroundColor: audioEffects.reverb
-                        ? currentColors.accent
+                        ? colors.natural.accent
                         : "rgba(255, 255, 255, 0.1)",
                     },
                   ]}
@@ -310,7 +308,7 @@ export function PlayerControls({
                     styles.effectButton,
                     {
                       backgroundColor: audioEffects.echo
-                        ? currentColors.accent
+                        ? colors.natural.accent
                         : "rgba(255, 255, 255, 0.1)",
                     },
                   ]}
@@ -331,7 +329,7 @@ export function PlayerControls({
                     styles.effectButton,
                     {
                       backgroundColor: audioEffects.surround
-                        ? currentColors.accent
+                          ? colors.natural.accent
                         : "rgba(255, 255, 255, 0.1)",
                     },
                   ]}
